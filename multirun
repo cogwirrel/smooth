@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for i in {0..4}
+for ((i=0;i<$2;i++))
 do
   if [ -n "$jobids" ]
     then
@@ -9,6 +9,4 @@ do
   jobids=$jobids`echo "${HOME}/smooth/job $1" | qsub -N test -o ${HOME}/smooth/out -e ${HOME}/smooth/err`
 done
 
-echo "echo hooray" | qsub -W depend=afterok:$jobids
-
-echo $jobids
+echo "${HOME}/smooth/jobs-done $jobids" | qsub -W depend=afterok:$jobids > /dev/null
