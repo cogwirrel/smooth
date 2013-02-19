@@ -1,0 +1,14 @@
+#!/bin/bash
+
+for i in {0..4}
+do
+  if [ -n "$jobids" ]
+    then
+    jobids=$jobids":"
+  fi
+  jobids=$jobids`echo "${HOME}/smooth/job $1" | qsub -N test -o ${HOME}/smooth/out -e ${HOME}/smooth/err`
+done
+
+echo "echo hooray" | qsub -W depend=afterok:$jobids
+
+echo $jobids
