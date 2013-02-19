@@ -1,9 +1,11 @@
 #!/bin/bash
 
+# Queue number of jobs specified in $2
 for ((i=0;i<$2;i++))
 do
   if [ -n "$jobids" ]
     then
+    # Separate job ids with : for -W argument of final job
     jobids=$jobids":"
   fi
   echo "Queueing job $i"
@@ -11,5 +13,7 @@ do
 done
 
 echo "Queueing jobs-done"
+
+# Queue a job which depends upon the completion of all jobs started by this script
 echo "${HOME}/smooth/jobs-done $jobids" | qsub -N "jobs-done" -W depend=afterok:$jobids > /dev/null
 echo "Jobs queued."
