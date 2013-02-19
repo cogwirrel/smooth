@@ -1,5 +1,3 @@
 #!/bin/bash
-module load intel-suite
-module load vtk/5.10.1
-make
-./ACA2-2013 $1
+
+echo "${HOME}/smooth/job $1" | qsub -N test -o ${HOME}/smooth/out -e ${HOME}/smooth/err

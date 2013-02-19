@@ -1,0 +1,11 @@
+#!/bin/bash
+
+#PBS -l walltime=0:02:00
+#PBS -l mem=500mb
+#PBS -l ncpus=1
+
+cd ${HOME}/smooth
+module load intel-suite
+module load vtk/5.10.1
+make
+./ACA2-2013 $1
