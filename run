@@ -1,0 +1,5 @@
+#!/bin/bash
+module load intel-suite
+module load vtk/5.10.1
+make
+./ACA2-2013 $1
