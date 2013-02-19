@@ -1,4 +1,7 @@
 #!/bin/bash
 
-echo done!!
-echo $1
+jobids=`echo $1 | tr ":" "\n"`
+for id in $jobids
+do
+  cat ${HOME}/smooth/out/$id.OU | grep "BENCHMARK" | grep -o "[0-9]+\.?[0-9]*"
+done

@@ -6,7 +6,10 @@ do
     then
     jobids=$jobids":"
   fi
+  echo "Queueing job $i"
   jobids=$jobids`echo "${HOME}/smooth/job $1" | qsub -N test -o ${HOME}/smooth/out -e ${HOME}/smooth/err`
 done
 
-echo "${HOME}/smooth/jobs-done $jobids" | qsub -W depend=afterok:$jobids > /dev/null
+echo "Queueing jobs-done"
+echo "${HOME}/smooth/jobs-done $jobids" | qsub -N "jobs-done" -W depend=afterok:$jobids > /dev/null
+echo "Jobs queued."
