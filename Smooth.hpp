@@ -7,8 +7,11 @@
 #ifndef SMOOTH_HPP_
 #define SMOOTH_HPP_
 
-#include "Mesh.hpp"
+#include <vector>
 
+#include "Mesh.hpp"
+void delete_vector(std::vector<std::vector<size_t>* >& vec);
+std::vector<std::vector<size_t>*> color(Mesh *mesh);
 void smooth(Mesh *mesh, size_t niter);
 
 #endif /* SMOOTH_HPP_ */
