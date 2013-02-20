@@ -16,33 +16,32 @@ std::vector<std::vector<size_t>*> color(Mesh* mesh) {
   // Creates vector intialised to -1
   std::vector<size_t> vertex_to_col(mesh->NNodes, -1);
   // Colors vector holding set of vectors assuming potentially 8 colors
-  std::vector<std::vector<size_t>*> col_to_vertex(8);
-  
+  std::vector<std::vector<size_t>*> col_to_vertex;
+
   // For each vector loop through and work out what color
   // it can fall in
-  for(size_t vid=0; vid<mesh->NNodes; ++vid){
+  for(size_t vid=0; vid < mesh->NNodes; ++vid){
     // Loop over connecting verticies. TODO is this NEList or NNList?
     int colors = INT_MAX;
     for(std::set<size_t>::const_iterator it=mesh->NEList[vid].begin();
               it!=mesh->NEList[vid].end(); ++it){
       // If it's been colored
       if (!(vertex_to_col[*it] == -1)) {
-        colors |= (1 << vertex_to_col[*it]); 
+        colors &= (INT_MAX - (1 << vertex_to_col[*it]));
       }
-      if (colors == 0) {
-        //TODO: RUN OUT OF COLOS
-      } else {
-        int min_bit = _bit_scan_forward(colors);
-        vertex_to_col[vid] = min_bit;
-
-        if (min_bit > col_to_vertex.size()) {
-          col_to_vertex.reserve(min_bit);
-        }
-        if (col_to_vertex[min_bit] == NULL) {
-          col_to_vertex[min_bit] = new std::vector<size_t>();
-        }
-        col_to_vertex[min_bit]->push_back(min_bit);
+    }
+    if (colors == 0) {
+      //TODO: RUN OUT OF COLOS
+    } else {
+      int min_bit = _bit_scan_forward(colors);
+      vertex_to_col[vid] = min_bit;
+      if (min_bit >= col_to_vertex.size()) {
+        col_to_vertex.resize(min_bit + 1);
       }
+      if (col_to_vertex[min_bit] == NULL) {
+        col_to_vertex[min_bit] = new std::vector<size_t>();
+      }
+      col_to_vertex[min_bit]->push_back(vid);
     }
   }
 
@@ -56,8 +55,6 @@ void delete_vector(std::vector<std::vector<size_t>* >& vec) {
 }
 
 void smooth(Mesh* mesh, size_t niter){
-  std::vector<std::vector<size_t>*> colors = color(mesh);
-  delete_vector(colors);
   // For the specified number of iterations, loop over all mesh vertices.
   for(size_t iter=0; iter<niter; ++iter){
     for(size_t vid=0; vid<mesh->NNodes; ++vid){
