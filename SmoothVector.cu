@@ -1,61 +1,7 @@
-//============================================================================
-// Name        : Smooth.cpp
-// Author      : George Rokos
-// Description : 2D Vertex-Smoothing kernel - Smart Laplacian variant
-//============================================================================
-
-#include <algorithm>
-#include <cmath>
-
-#include "SVD2x2.hpp"
-#include "Smooth.hpp"
 #include "SmoothVector.h"
 
-#include <limits.h>
-
-std::vector<std::vector<size_t>*> color(Mesh* mesh) {
-  // Creates vector intialised to UINT_MAX being not colored yet
-  std::vector<size_t> vertex_to_col(mesh->NNodes, UINT_MAX);
-  // Colors vector holding set of vectors assuming potentially 8 colors
-  std::vector<std::vector<size_t>*> col_to_vertex;
-
-  // For each vector loop through and work out what color
-  // it can fall in
-  for(size_t vid=0; vid < mesh->NNodes; ++vid){
-    // Loop over connecting verticies.
-    unsigned int colors = UINT_MAX;
-    for(std::vector<size_t>::const_iterator it=mesh->NNList[vid].begin();
-              it!=mesh->NNList[vid].end(); ++it){
-      // If it's been colored
-      if (!(vertex_to_col[*it] == UINT_MAX)) {
-        colors &= ~(1 << vertex_to_col[*it]);
-      }
-    }
-    if (colors == 0) {
-      //TODO: RUN OUT OF COLOS
-    } else {
-      unsigned int min_bit = __builtin_ffs(colors) - 1;
-      vertex_to_col[vid] = min_bit;
-      if (min_bit >= col_to_vertex.size()) {
-        col_to_vertex.resize(min_bit + 1);
-      }
-      if (col_to_vertex[min_bit] == NULL) {
-        col_to_vertex[min_bit] = new std::vector<size_t>();
-      }
-      col_to_vertex[min_bit]->push_back(vid);
-    }
-  }
-
-  return col_to_vertex;
-}
-
-void delete_vector(std::vector<std::vector<size_t>* >& vec) {
-  for(unsigned int i = 0; i < vec.size(); i++) {
-    delete vec[i];
-  }
-}
-
-void smooth_vector(Mesh* mesh, size_t vid) {
+__global__ void smooth_vector(Mesh* mesh, size_t* vids) {
+  size_t vid = vids[blockIdx.x];
   if(mesh->isCornerNode(vid))
     return;
 
@@ -169,74 +115,34 @@ void smooth_vector(Mesh* mesh, size_t vid) {
   }
 }
 
-// void smooth(Mesh* mesh, size_t niter){
-//   std::vector<std::vector<size_t>*> colourings = color(mesh);
+void runCudaImplementation(Mesh* mesh, std::vector<size_t>* vids) {
+        /***********************************************/
+  // Device copy of vids
+  size_t* d_vids;
 
-//   // For the specified number of iterations, loop over all mesh vertices.
-//   for(size_t iter=0; iter<niter; ++iter){
+  // Size of vids
+  size_t vid_size = (*vids)->size() * sizeof(size_t);
 
-//     for(std::vector<std::vector<size_t>*>::const_iterator nodes=colourings.begin();
-//         nodes != colourings.end(); ++nodes) {
-//       for(std::vector<size_t>::const_iterator v = (*nodes)->begin();
-//           v != (*nodes)->end(); ++v) {
-//         size_t vid = *v;
+  // Allocate space for vids on device
+  cudaMalloc((void **)&d_vids, vid_size);
 
-//         //TODO: RUN ON GPU
-//         smooth_vector(mesh, vid);
-//       }
-//     }
-//   }
-// }
+  // Copy host vids to device d_vids
+  cudaMemcpy(d_vids, &vids[0], vid_size, cudaMemcpyHostToDevice);
+  
+  // Device copy of mesh
+  Mesh* d_mesh;
+  size_t mesh_size = sizeof(mesh);
+  cudaMalloc((void**)&d_mesh, mesh_size);
+  cudaMemcpy(d_mesh, mesh, mesh_size, cudaMemcpyHostToDevice);
 
-void smooth(Mesh* mesh, size_t niter){
-  std::vector<std::vector<size_t>*> colourings = color(mesh);
+  // Kick off parallel execution - one block per vid in vids
+  smooth_vector<<<d_vids.size(), 1>>>(d_mesh, d_vids);
 
-  // For the specified number of iterations, loop over all mesh vertices.
-  for(size_t iter=0; iter<niter; ++iter){
+  // Copy result back to host
+  cudaMemcpy(mesh, d_mesh, meshsize, cudaMemcpyDeviceToHost);
 
-    // Loop over colouring groups
-    for(std::vector<std::vector<size_t>*>::const_iterator vids=colourings.begin();
-        vids != colourings.end(); ++vids) {
-
-      runCudaImplementation(mesh, *vids);
-
-      // // Device copy of vids
-      // size_t* d_vids;
-
-      // // Size of vids
-      // size_t vid_size = (*vids)->size() * sizeof(size_t);
-
-      // // Allocate space for vids on device
-      // cudaMalloc((void **)&d_vids, vid_size);
-
-      // // Copy host vids to device d_vids
-      // cudaMemcpy(d_vids, &vids[0], vid_size, cudaMemcpyHostToDevice);
-      
-      // // Device copy of mesh
-      // Mesh* d_mesh;
-      // size_t mesh_size = sizeof(mesh);
-      // cudaMalloc((void**)&d_mesh, mesh_size);
-      // cudaMemcpy(d_mesh, mesh, mesh_size, cudaMemcpyHostToDevice);
-
-      // // Kick off parallel execution - one block per vid in vids
-      // smooth_vector<<<d_vids.size(), 1>>>(d_mesh, d_vids);
-
-      // // Copy result back to host
-      // cudaMemcpy(mesh, d_mesh, meshsize, cudaMemcpyDeviceToHost);
-
-      // // Clean up everything bar result
-      // free(vids);
-      // cudaFree(d_vids);
-      // cudaFree(d_mesh);
-
-      /*
-      for(std::vector<size_t>::const_iterator v = (*nodes)->begin();
-          v != (*nodes)->end(); ++v) {
-        size_t vid = *v;
-
-        //TODO: RUN ON GPU
-        smooth_vector(mesh, vid);
-      }*/
-    }
-  }
+  // Clean up everything bar result
+  free(vids);
+  cudaFree(d_vids);
+  cudaFree(d_mesh);
 }
