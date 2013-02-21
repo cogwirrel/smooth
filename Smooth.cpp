@@ -13,8 +13,8 @@
 #include <limits.h>
 
 std::vector<std::vector<size_t>*> color(Mesh* mesh) {
-  // Creates vector intialised to -1
-  std::vector<size_t> vertex_to_col(mesh->NNodes, -1);
+  // Creates vector intialised to UINT_MAX being not colored yet
+  std::vector<size_t> vertex_to_col(mesh->NNodes, UINT_MAX);
   // Colors vector holding set of vectors assuming potentially 8 colors
   std::vector<std::vector<size_t>*> col_to_vertex;
 
@@ -26,14 +26,14 @@ std::vector<std::vector<size_t>*> color(Mesh* mesh) {
     for(std::vector<size_t>::const_iterator it=mesh->NNList[vid].begin();
               it!=mesh->NNList[vid].end(); ++it){
       // If it's been colored
-      if (!(vertex_to_col[*it] == -1)) {
+      if (!(vertex_to_col[*it] == UINT_MAX)) {
         colors &= ~(1 << vertex_to_col[*it]);
       }
     }
     if (colors == 0) {
       //TODO: RUN OUT OF COLOS
     } else {
-      int min_bit = __builtin_ffs(colors) - 1;
+      unsigned int min_bit = __builtin_ffs(colors) - 1;
       vertex_to_col[vid] = min_bit;
       if (min_bit >= col_to_vertex.size()) {
         col_to_vertex.resize(min_bit + 1);
@@ -49,7 +49,7 @@ std::vector<std::vector<size_t>*> color(Mesh* mesh) {
 }
 
 void delete_vector(std::vector<std::vector<size_t>* >& vec) {
-  for(int i = 0; i < vec.size(); i++) {
+  for(unsigned int i = 0; i < vec.size(); i++) {
     delete vec[i];
   }
 }
