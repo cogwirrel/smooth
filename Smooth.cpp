@@ -21,10 +21,10 @@ std::vector<std::vector<size_t>*> color(Mesh* mesh) {
   // For each vector loop through and work out what color
   // it can fall in
   for(size_t vid=0; vid < mesh->NNodes; ++vid){
-    // Loop over connecting verticies. TODO is this NEList or NNList?
+    // Loop over connecting verticies.
     int colors = INT_MAX;
-    for(std::set<size_t>::const_iterator it=mesh->NEList[vid].begin();
-              it!=mesh->NEList[vid].end(); ++it){
+    for(std::set<size_t>::const_iterator it=mesh->NNList[vid].begin();
+              it!=mesh->NNList[vid].end(); ++it){
       // If it's been colored
       if (!(vertex_to_col[*it] == -1)) {
         colors &= (INT_MAX - (1 << vertex_to_col[*it]));
