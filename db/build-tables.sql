@@ -3,13 +3,13 @@
 --
 --        sqlite3 example.db < build-tables.sql
 CREATE TABLE experiment (
-     experimentid serial unique Primary Key,
+     experimentid INTEGER Primary Key,
      sha CHARACTER(40),
      description text
    );
 
 CREATE TABLE data (
-     dataid serial unique Primary Key,
+     dataid INTEGER Primary Key,
      experimentid integer References experiment,
      time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
      stdout text,
