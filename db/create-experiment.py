@@ -6,7 +6,7 @@ import argparse
 DB_FILE = 'example.db'
 
 # Parse arguments
-parser = argparse.ArgumentParser(description='Create an experiment in the database.')
+parser = argparse.ArgumentParser(description='Create an experiment in the database. If successful, writes the experiment id to stdout.')
 parser.add_argument('sha', metavar='SHA', type=str,
                    help='The SHA of the associated git commit')
 parser.add_argument('desc', metavar='DESC', type=str,
@@ -17,5 +17,5 @@ args = parser.parse_args()
 
 # perform DB insertion
 with sqlite3.connect(DB_FILE) as conn:
-	print args
-	conn.execute('insert into experiment (sha, description) values (?,?)', (args.sha, args.desc))
+	cur = conn.execute('insert into experiment (sha, description) values (?,?)', (args.sha, args.desc))
+	print cur.lastrowid
