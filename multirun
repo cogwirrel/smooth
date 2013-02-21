@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Usage ./multirun small.vtu 5
+
 # Queue number of jobs specified in $2
 for ((i=0;i<$2;i++))
 do
