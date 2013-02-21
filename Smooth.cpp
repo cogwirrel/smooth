@@ -22,18 +22,18 @@ std::vector<std::vector<size_t>*> color(Mesh* mesh) {
   // it can fall in
   for(size_t vid=0; vid < mesh->NNodes; ++vid){
     // Loop over connecting verticies.
-    int colors = INT_MAX;
-    for(std::set<size_t>::const_iterator it=mesh->NNList[vid].begin();
+    unsigned int colors = UINT_MAX;
+    for(std::vector<size_t>::const_iterator it=mesh->NNList[vid].begin();
               it!=mesh->NNList[vid].end(); ++it){
       // If it's been colored
       if (!(vertex_to_col[*it] == -1)) {
-        colors &= (INT_MAX - (1 << vertex_to_col[*it]));
+        colors &= ~(1 << vertex_to_col[*it]);
       }
     }
     if (colors == 0) {
       //TODO: RUN OUT OF COLOS
     } else {
-      int min_bit = _bit_scan_forward(colors);
+      int min_bit = __builtin_ffs(colors) - 1;
       vertex_to_col[vid] = min_bit;
       if (min_bit >= col_to_vertex.size()) {
         col_to_vertex.resize(min_bit + 1);
