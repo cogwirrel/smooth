@@ -54,7 +54,8 @@ void delete_vector(std::vector<std::vector<size_t>* >& vec) {
   }
 }
 
-void smooth_vector(Mesh* mesh, size_t vid) {
+__global__ void smooth_vector(Mesh* mesh, size_t* vids) {
+  size_t vid = vids[blockIdx.x];
   if(mesh->isCornerNode(vid))
     return;
 
@@ -174,15 +175,65 @@ void smooth(Mesh* mesh, size_t niter){
   // For the specified number of iterations, loop over all mesh vertices.
   for(size_t iter=0; iter<niter; ++iter){
 
+    // Loop over colouring groups
     for(std::vector<std::vector<size_t>*>::const_iterator nodes=colourings.begin();
         nodes != colourings.end(); ++nodes) {
+
+      /***********************************************/
+      // This could maybe be replaced with:
+      // size_t* vids = &nodes[0];
+
+      // See http://stackoverflow.com/questions/2923272/how-to-convert-vector-to-array-c
+
+      // Size of vids array
+      int size = (*nodes)->size() * sizeof(size_t);
+
+      // Declare an array of size number of vids in colouring in host
+      size_t* vids = malloc(size);
+
+      int i = 0;
+      for(std::vector<size_t>::const_iterator v = (*nodes)->begin();
+          v != (*nodes)->end(); ++v) {
+        // Fill up array with vids
+        vids[i] = *v;
+        ++i;
+      }
+      /***********************************************/
+
+      // Device copy of vids
+      size_t* d_vids;
+
+      // Allocate space for vids on device
+      cudaMalloc((void **)&d_vids, size);
+
+      // Copy host vids to device d_vids
+      cudaMemcpy(d_vids, vids, size, cudaMemcpyHostToDevice);
+      
+      // Device copy of mesh
+      Mesh* d_mesh;
+      int meshsize = sizeof(mesh);
+      cudaMalloc((void**)&d_mesh, meshsize);
+      cudaMemcpy(d_mesh, mesh, meshsize, cudaMemcpyHostToDevice);
+
+      // Kick off parallel execution - one block per vid in vids
+      smooth_vector<<<d_vids.size(), 1>>>(d_mesh, d_vids);
+
+      // Copy result back to host
+      cudaMemcpy(mesh, d_mesh, meshsize, cudaMemcpyDeviceToHost);
+
+      // Clean up everything bar result
+      free(vids);
+      cudaFree(d_vids);
+      cudaFree(d_mesh);
+
+      /*
       for(std::vector<size_t>::const_iterator v = (*nodes)->begin();
           v != (*nodes)->end(); ++v) {
         size_t vid = *v;
 
         //TODO: RUN ON GPU
         smooth_vector(mesh, vid);
-      }
+      }*/
     }
   }
 }
