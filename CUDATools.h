@@ -158,8 +158,8 @@ public:
     SET_CONSTANT(smoothStatus)
 
     // set element orientation in CUDA smoothing kernel
-    cuModuleGetGlobal(&CUDA_orientation, &symbol_size, smoothModule, "orientation");
-    cuMemcpyHtoD(CUDA_orientation, &orientation, symbol_size);
+    // cuModuleGetGlobal(&CUDA_orientation, &symbol_size, smoothModule, "orientation");
+    cuMemcpyHtoD(CUDA_orientation, &mesh->getOrientation(), symbol_size);
   }
 
   void copyCoordinatesToDevice(Mesh* mesh)
