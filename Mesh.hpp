@@ -7,6 +7,15 @@
 #ifndef MESH_HPP_
 #define MESH_HPP_
 
+#ifdef __CUDAC__
+#define HOST __host__
+#define DEVICE __device__
+#else
+#define HOST
+#define DEVICE
+#endif
+
+
 #include <cstddef>
 #include <set>
 #include <vector>
@@ -53,10 +62,10 @@ public:
   // For every vertex i, NEList[i] contains the IDs of all adjacent elements.
   std::vector< std::set<size_t> > NEList;
 
-  bool isSurfaceNode(size_t vid) const;
-  bool isCornerNode(size_t vid) const;
+  inline DEVICE bool isSurfaceNode(size_t vid) const;
+  inline DEVICE bool isCornerNode(size_t vid) const;
   double element_area(size_t eid) const;
-  double element_quality(size_t eid) const;
+  inline DEVICE double element_quality(size_t eid) const;
   Quality get_mesh_quality() const;
 
 private:

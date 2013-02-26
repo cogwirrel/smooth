@@ -1,4 +1,5 @@
 #include "SmoothVector.h"
+#include "SVD2x2.hpp"
 
 __global__ void smooth_vector(Mesh* mesh, size_t* vids) {
   size_t vid = vids[blockIdx.x];
@@ -121,7 +122,7 @@ void runCudaImplementation(Mesh* mesh, std::vector<size_t>* vids) {
   size_t* d_vids;
 
   // Size of vids
-  size_t vid_size = (*vids)->size() * sizeof(size_t);
+  size_t vid_size = vids->size() * sizeof(size_t);
 
   // Allocate space for vids on device
   cudaMalloc((void **)&d_vids, vid_size);
@@ -136,10 +137,10 @@ void runCudaImplementation(Mesh* mesh, std::vector<size_t>* vids) {
   cudaMemcpy(d_mesh, mesh, mesh_size, cudaMemcpyHostToDevice);
 
   // Kick off parallel execution - one block per vid in vids
-  smooth_vector<<<d_vids.size(), 1>>>(d_mesh, d_vids);
+  smooth_vector<<<vids->size(), 1>>>(d_mesh, d_vids);
 
   // Copy result back to host
-  cudaMemcpy(mesh, d_mesh, meshsize, cudaMemcpyDeviceToHost);
+  cudaMemcpy(mesh, d_mesh, mesh_size, cudaMemcpyDeviceToHost);
 
   // Clean up everything bar result
   free(vids);

@@ -13,7 +13,7 @@
  * eigenvalues[0] contains the largest eigenvalue
  * eigenvalues[1] contains the smallest eigenvalue
  */
-void calc_eigenvalues(const double A[4], double eigenvalues[2]){
+DEVICE void calc_eigenvalues(const double **A, double **eigenvalues){
   double b, discriminant;
 
   b = A[0]+A[3];
@@ -28,8 +28,8 @@ void calc_eigenvalues(const double A[4], double eigenvalues[2]){
  * Calculates the eigenvectors of a 2x2 matrix A
  * given the sorted (largest to smallest) array of eigenvalues
  */
-void calc_eigenvectors(const double A[4],
-    const double eigenvalues[2], double eigenvectors[4]){
+DEVICE void calc_eigenvectors(const double A[4]*,
+    const double eigenvalues[2]*, double eigenvectors[4]*){
   double D[4];
   double proportion;
 
@@ -118,7 +118,7 @@ void calc_eigenvectors(const double A[4],
 /*
  * Solves the 2D linear system Ap=q using SVD
  */
-void svd_solve_2x2(const double A[4], double p[2], const double q[2]){
+DEVICE void svd_solve_2x2(const double A*, double p*, const double q*){
   /*
    * If A is decomposed as A = U * Σ * Vtransp, where:
    *

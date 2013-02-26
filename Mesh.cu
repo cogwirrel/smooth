@@ -93,15 +93,15 @@ void Mesh::create_adjacency(){
   }
 }
 
-bool Mesh::isSurfaceNode(size_t vid) const{
+DEVICE bool Mesh::isSurfaceNode(size_t vid) const{
   return NEList[vid].size() < NNList[vid].size();
 }
 
-bool Mesh::isCornerNode(size_t vid) const{
+DEVICE bool Mesh::isCornerNode(size_t vid) const{
   return fabs(normals[2*vid])==1.0 && fabs(normals[2*vid+1]==1.0);
 }
 
-void Mesh::find_surface(){
+DEVICE void Mesh::find_surface(){
   // Initialise all normal vectors to (0.0,0.0).
   normals.resize(2*NNodes, 0.0);
 
@@ -215,7 +215,7 @@ double Mesh::element_area(size_t eid) const{
  * for Quasioptimal Mesh Generation, Computational Mathematics and Mathematical
  * Physics, Vol. 39, No. 9, 1999, pp. 1468 - 1486.
  */
-double Mesh::element_quality(size_t eid) const{
+DEVICE double Mesh::element_quality(size_t eid) const{
   const size_t *n = &ENList[3*eid];
 
   // Pointers to the coordinates of each vertex
