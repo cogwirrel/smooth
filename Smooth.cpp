@@ -169,25 +169,6 @@ void smooth_vector(Mesh* mesh, size_t vid) {
   }
 }
 
-// void smooth(Mesh* mesh, size_t niter){
-//   std::vector<std::vector<size_t>*> colourings = color(mesh);
-
-//   // For the specified number of iterations, loop over all mesh vertices.
-//   for(size_t iter=0; iter<niter; ++iter){
-
-//     for(std::vector<std::vector<size_t>*>::const_iterator nodes=colourings.begin();
-//         nodes != colourings.end(); ++nodes) {
-//       for(std::vector<size_t>::const_iterator v = (*nodes)->begin();
-//           v != (*nodes)->end(); ++v) {
-//         size_t vid = *v;
-
-//         //TODO: RUN ON GPU
-//         smooth_vector(mesh, vid);
-//       }
-//     }
-//   }
-// }
-
 void smooth(Mesh* mesh, size_t niter){
 
   std::vector<std::vector<size_t>*> colourings = color(mesh);
