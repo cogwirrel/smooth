@@ -26,13 +26,13 @@ $(TARGET):	$(OBJS)
 all:	@$(TARGET)
 
 SmoothVector.o:
-	nvcc -c -o SmoothVector.o SmoothVector.cu
+	nvcc -arch=sm_20 -c -dlink -o SmoothVector.o SmoothVector.cu
 
 SVD2x2.o:
-	nvcc -c -o SVD2x2.o SVD2x2.cu 
+	nvcc -arch=sm_20 -c -dlink -o SVD2x2.o SVD2x2.cu 
 
 Mesh.o:
-	nvcc -c -o Mesh.o Mesh.cu
+	nvcc -arch=sm_20 -c -dlink -o Mesh.o Mesh.cu
  
 clean:
 	@rm -f $(OBJS) $(TARGET)
