@@ -189,54 +189,33 @@ void smooth_vector(Mesh* mesh, size_t vid) {
 // }
 
 void smooth(Mesh* mesh, size_t niter){
+
   std::vector<std::vector<size_t>*> colourings = color(mesh);
+
+  CUDATools<real_t, index_t> cudaTools;
+
+  cudaTools.initialize();
+
+  if(cudaTools.isEnabled()) {
+    cudaTools.copyMeshDataToDevice(mesh, colourings, NULL, 2); // TODO do we need a quality? (NULL for now)
+    cudaTools.reserveSmoothStatusMemory();
+  }
+
+  
 
   // For the specified number of iterations, loop over all mesh vertices.
   for(size_t iter=0; iter<niter; ++iter){
 
     // Loop over colouring groups
-    for(std::vector<std::vector<size_t>*>::const_iterator vids=colourings.begin();
-        vids != colourings.end(); ++vids) {
+    for(int ic = 0; ic < colourings.size(); ++ic) {
 
-      runCudaImplementation(mesh, *vids);
-
-      // // Device copy of vids
-      // size_t* d_vids;
-
-      // // Size of vids
-      // size_t vid_size = (*vids)->size() * sizeof(size_t);
-
-      // // Allocate space for vids on device
-      // cudaMalloc((void **)&d_vids, vid_size);
-
-      // // Copy host vids to device d_vids
-      // cudaMemcpy(d_vids, &vids[0], vid_size, cudaMemcpyHostToDevice);
-      
-      // // Device copy of mesh
-      // Mesh* d_mesh;
-      // size_t mesh_size = sizeof(mesh);
-      // cudaMalloc((void**)&d_mesh, mesh_size);
-      // cudaMemcpy(d_mesh, mesh, mesh_size, cudaMemcpyHostToDevice);
-
-      // // Kick off parallel execution - one block per vid in vids
-      // smooth_vector<<<d_vids.size(), 1>>>(d_mesh, d_vids);
-
-      // // Copy result back to host
-      // cudaMemcpy(mesh, d_mesh, meshsize, cudaMemcpyDeviceToHost);
-
-      // // Clean up everything bar result
-      // free(vids);
-      // cudaFree(d_vids);
-      // cudaFree(d_mesh);
-
-      /*
-      for(std::vector<size_t>::const_iterator v = (*nodes)->begin();
-          v != (*nodes)->end(); ++v) {
-        size_t vid = *v;
-
-        //TODO: RUN ON GPU
-        smooth_vector(mesh, vid);
-      }*/
+      if(cudaTools.isEnabled()) {
+        cudaTools.copyCoordinatesToDevice(mesh);
+        cudaTools.copyMetricToDevice(mesh);
+        cudaTools.launchSmoothingKernel(ic);
+        cudaTools.copyCoordinatesFromDevice(mesh);
+        cudaTools.copyMetricFromDevice(mesh);
+      }
     }
   }
 }
