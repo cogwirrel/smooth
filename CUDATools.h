@@ -107,7 +107,7 @@ public:
 
   void copyMeshDataToDevice(Mesh<real_t, index_t> * mesh,
       std::map<int, std::deque<index_t> > & colour_sets, std::vector<real_t>  & quality,
-      int orientation, size_t dimensions)
+      size_t dimensions)
   {
     ndims = dimensions;
     nloc = ndims+1;
@@ -233,15 +233,6 @@ public:
     delete[] NEListIndex;
 
     cuCtxDestroy(cuContext);
-  }
-
-  void setSmoothingKernel(std::string method, std::vector<unsigned char> & status)
-  {
-    if(cuModuleGetFunction(&smoothKernel, smoothModule, method.c_str()) != CUDA_SUCCESS)
-    {
-      std::cout << "Error loading CUDA kernel " << method << std::endl;
-      enabled = false;
-    }
   }
 
   void launchSmoothingKernel(int colour)
