@@ -52,7 +52,7 @@
 
 #include "Mesh.h"
 
-template<typename real_t, typename index_t> class CUDATools
+template class CUDATools
 {
 public:
 
@@ -96,16 +96,23 @@ public:
         return;
       }
 
-      if(cuModuleLoad(&smoothModule, "CUDA/Smooth.cubin") != CUDA_SUCCESS)
+      //TODO: modify makefile to load this
+      if(cuModuleLoad(&smoothModule, "Smooth.cubin") != CUDA_SUCCESS)
       {
         std::cout << "Error loading CUDA module \"Smooth\"" << std::endl;
+        return;
+      }
+
+      if(cuModuleGetFunction(&smoothKernel, smoothModule, "smooth") != CUDA_SUCCESS)
+      {
+        std::cout << "Error loading CUDA kernel " << method << std::endl;
         return;
       }
 
       enabled = true;
   }
 
-  void copyMeshDataToDevice(Mesh<real_t, index_t> * mesh,
+  void copyMeshDataToDevice(Mesh * mesh,
       std::map<int, std::deque<index_t> > & colour_sets, std::vector<real_t>  & quality,
       size_t dimensions)
   {
@@ -120,15 +127,15 @@ public:
     NEListToArray(mesh->NEList);
 
     // and copy everything to the device
-    copyArrayToDevice<real_t>(mesh->get_coords(0), CUDA_coords, NNodes * ndims);
-    copyArrayToDevice<real_t>(mesh->get_metric(0), CUDA_metric, NNodes * ndims * ndims);
-    copyArrayToDevice<real_t>(&quality[0], CUDA_quality, NElements);
-    copyArrayToDevice<index_t>(&mesh->_ENList[0], CUDA_ENList, NElements * nloc);
-    copyArrayToDevice<index_t>(NNListArray, CUDA_NNListArray, NNListArray_size);
-    copyArrayToDevice<index_t>(NNListIndex, CUDA_NNListIndex, NNodes+1);
-    copyArrayToDevice<index_t>(colourArray, CUDA_colourArray, NNodes);
-    copyArrayToDevice<index_t>(NEListArray, CUDA_NEListArray, NEListArray_size);
-    copyArrayToDevice<index_t>(NEListIndex, CUDA_NEListIndex, NNodes+1);
+    copyArrayToDevice(mesh->get_coords(0), CUDA_coords, NNodes * ndims);
+    copyArrayToDevice(mesh->get_metric(0), CUDA_metric, NNodes * ndims * ndims);
+    copyArrayToDevice(&quality[0], CUDA_quality, NElements);
+    copyArrayToDevice(&mesh->_ENList[0], CUDA_ENList, NElements * nloc);
+    copyArrayToDevice(NNListArray, CUDA_NNListArray, NNListArray_size);
+    copyArrayToDevice(NNListIndex, CUDA_NNListIndex, NNodes+1);
+    copyArrayToDevice(colourArray, CUDA_colourArray, NNodes);
+    copyArrayToDevice(NEListArray, CUDA_NEListArray, NEListArray_size);
+    copyArrayToDevice(NEListIndex, CUDA_NEListIndex, NNodes+1);
 
     //set the constant symbols of the smoothing-kernel, i.e. the addresses of all arrays copied above
     CUdeviceptr address; // TODO ????
@@ -155,22 +162,22 @@ public:
     cuMemcpyHtoD(CUDA_orientation, &orientation, symbol_size);
   }
 
-  void copyCoordinatesToDevice(Mesh<real_t, index_t> * mesh)
+  void copyCoordinatesToDevice(Mesh* mesh)
   {
-    copyArrayToDeviceNoAlloc<real_t>((real_t *) &mesh->_coords[0], CUDA_coords, NNodes * ndims);
+    copyArrayToDeviceNoAlloc(&mesh->coords[0], CUDA_coords, NNodes * ndims);
   }
 
-  void copyMetricToDevice(Mesh<real_t, index_t> * mesh)
+  void copyMetricToDevice(Mesh* mesh)
   {
-    copyArrayToDeviceNoAlloc<real_t>((real_t *) &mesh->metric[0], CUDA_metric, NNodes * ndims * ndims);
+    copyArrayToDeviceNoAlloc(&mesh->metric[0], CUDA_metric, NNodes * ndims * ndims);
   }
 
-  void copyCoordinatesFromDevice(Mesh<real_t, index_t> * mesh)
+  void copyCoordinatesFromDevice(Mesh* mesh)
   {
-    copyArrayFromDevice<real_t>((real_t *) &mesh->_coords[0], CUDA_coords, NNodes * ndims);
+    copyArrayFromDevice(&mesh->_coords[0], CUDA_coords, NNodes * ndims);
   }
 
-  void copyMetricFromDevice(Mesh<real_t, index_t> * mesh)
+  void copyMetricFromDevice(Mesh* mesh)
   {
     copyArrayFromDevice<real_t>((real_t *) &mesh->metric[0], CUDA_metric, NNodes * ndims * ndims);
   }
