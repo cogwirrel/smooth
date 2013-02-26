@@ -199,22 +199,17 @@ void smooth(Mesh* mesh, size_t niter){
   if(cudaTools.isEnabled()) {
     cudaTools.copyMeshDataToDevice(mesh, colourings, NULL, 2); // TODO do we need a quality? (NULL for now)
     cudaTools.reserveSmoothStatusMemory();
-  }
-
-  
-
   // For the specified number of iterations, loop over all mesh vertices.
-  for(size_t iter=0; iter<niter; ++iter){
+    for(size_t iter=0; iter<niter; ++iter){
 
-    // Loop over colouring groups
-    for(int ic = 0; ic < colourings.size(); ++ic) {
+      // Loop over colouring groups
+      for(int ic = 0; ic < colourings.size(); ++ic) {
 
-      if(cudaTools.isEnabled()) {
-        cudaTools.copyCoordinatesToDevice(mesh);
-        cudaTools.copyMetricToDevice(mesh);
-        cudaTools.launchSmoothingKernel(ic);
-        cudaTools.copyCoordinatesFromDevice(mesh);
-        cudaTools.copyMetricFromDevice(mesh);
+          cudaTools.copyCoordinatesToDevice(mesh);
+          cudaTools.copyMetricToDevice(mesh);
+          cudaTools.launchSmoothingKernel(ic);
+          cudaTools.copyCoordinatesFromDevice(mesh);
+          cudaTools.copyMetricFromDevice(mesh);
       }
     }
   }
