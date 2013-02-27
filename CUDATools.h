@@ -50,9 +50,9 @@
 
 #include <cuda.h>
 
-#include "Mesh.h"
+#include "Mesh.hpp"
 
-template class CUDATools
+class CUDATools
 {
 public:
 
@@ -105,7 +105,7 @@ public:
 
       if(cuModuleGetFunction(&smoothKernel, smoothModule, "smooth") != CUDA_SUCCESS)
       {
-        std::cout << "Error loading CUDA kernel " << method << std::endl;
+        std::cout << "Error loading CUDA kernel smooth method" << std::endl;
         return;
       }
 
@@ -113,13 +113,13 @@ public:
   }
 
   void copyMeshDataToDevice(Mesh * mesh,
-      std::map<int, std::deque<index_t> > & colour_sets, std::vector<real_t>  & quality,
+      std::vector<std::vector<size_t>*>& colour_sets, std::vector<double>  & quality,
       size_t dimensions)
   {
     ndims = dimensions;
     nloc = ndims+1;
-    NNodes = mesh->get_number_nodes();
-    NElements = mesh->_NElements;
+    NNodes = mesh->NNodes;
+    NElements = mesh->NElements;
 
     // convert pragmatic data-structures to C-style arrays
     NNListToArray(mesh->NNList);
@@ -127,10 +127,10 @@ public:
     NEListToArray(mesh->NEList);
 
     // and copy everything to the device
-    copyArrayToDevice(mesh->get_coords(0), CUDA_coords, NNodes * ndims);
-    copyArrayToDevice(mesh->get_metric(0), CUDA_metric, NNodes * ndims * ndims);
-    copyArrayToDevice(&quality[0], CUDA_quality, NElements);
-    copyArrayToDevice(&mesh->_ENList[0], CUDA_ENList, NElements * nloc);
+    copyArrayToDevice<double>(&mesh->coords[0], CUDA_coords, NNodes * ndims);
+    copyArrayToDevice<double>(&mesh->metric[0], CUDA_metric, NNodes * ndims * ndims);
+    //copyArrayToDevice(&quality[0], CUDA_quality, NElements);
+    copyArrayToDevice<size_t>(&mesh->ENList[0], CUDA_ENList, NElements * nloc);
     copyArrayToDevice(NNListArray, CUDA_NNListArray, NNListArray_size);
     copyArrayToDevice(NNListIndex, CUDA_NNListIndex, NNodes+1);
     copyArrayToDevice(colourArray, CUDA_colourArray, NNodes);
@@ -159,7 +159,7 @@ public:
 
     // set element orientation in CUDA smoothing kernel
     // cuModuleGetGlobal(&CUDA_orientation, &symbol_size, smoothModule, "orientation");
-    cuMemcpyHtoD(CUDA_orientation, &mesh->getOrientation(), symbol_size);
+    cuMemcpyHtoD(CUDA_orientation, &mesh->orientation, symbol_size);
   }
 
   void copyCoordinatesToDevice(Mesh* mesh)
@@ -174,12 +174,12 @@ public:
 
   void copyCoordinatesFromDevice(Mesh* mesh)
   {
-    copyArrayFromDevice(&mesh->_coords[0], CUDA_coords, NNodes * ndims);
+    copyArrayFromDevice(&mesh->coords[0], CUDA_coords, NNodes * ndims);
   }
 
   void copyMetricFromDevice(Mesh* mesh)
   {
-    copyArrayFromDevice<real_t>((real_t *) &mesh->metric[0], CUDA_metric, NNodes * ndims * ndims);
+    copyArrayFromDevice<double>((double *) &mesh->metric[0], CUDA_metric, NNodes * ndims * ndims);
   }
 
   void reserveSmoothStatusMemory()
@@ -244,8 +244,8 @@ public:
 
   void launchSmoothingKernel(int colour)
   {
-    CUdeviceptr CUDA_ColourSetAddr = CUDA_colourArray + colourIndex[--colour] * sizeof(index_t);
-    index_t NNodesInSet = colourIndex[colour+1] - colourIndex[colour];
+    CUdeviceptr CUDA_ColourSetAddr = CUDA_colourArray + colourIndex[--colour] * sizeof(size_t);
+    size_t NNodesInSet = colourIndex[colour+1] - colourIndex[colour];
     threadsPerBlock = 32;
     blocksPerGrid = (NNodesInSet + threadsPerBlock - 1) / threadsPerBlock;
 
@@ -264,20 +264,20 @@ public:
   }
 
 private:
-  void NNListToArray(const std::vector< std::vector<index_t> > & NNList)
+  void NNListToArray(const std::vector< std::vector<size_t> > & NNList)
   {
-    typename std::vector< std::vector<index_t> >::const_iterator vec_it;
-    typename std::vector<index_t>::const_iterator vector_it;
-    index_t offset = 0;
-    index_t index = 0;
+    std::vector< std::vector<size_t> >::const_iterator vec_it;
+    std::vector<size_t>::const_iterator vector_it;
+    size_t offset = 0;
+    size_t index = 0;
 
     for(vec_it = NNList.begin(); vec_it != NNList.end(); vec_it++)
       offset += vec_it->size();
 
     NNListArray_size = offset;
 
-    NNListIndex = new index_t[NNodes+1];
-    NNListArray = new index_t[NNListArray_size];
+    NNListIndex = new size_t[NNodes+1];
+    NNListArray = new size_t[NNListArray_size];
 
     offset = 0;
 
@@ -293,43 +293,46 @@ private:
     NNListIndex[index] = offset;
   }
 
-  void colourSetsToArray(const std::map< int, std::vector<index_t> > & colour_sets)
+  void colourSetsToArray(const std::vector<std::vector<size_t>*> & colour_sets)
   {
-    typename std::map< int, std::vector<index_t> >::const_iterator map_it;
-    typename std::vector<index_t>::const_iterator vector_it;
+    std::vector<std::vector<size_t>*>::const_iterator vec_it;
+    std::vector<size_t>::const_iterator vector_it;
 
     NColours = colour_sets.size();
 
-    colourIndex = new index_t[NColours+1];
-    colourArray = new index_t[NNodes];
+    colourIndex = new size_t[NColours+1];
+    colourArray = new size_t[NNodes];
 
-    index_t offset = 0;
+    size_t offset = 0;
 
-    for(map_it = colour_sets.begin(); map_it != colour_sets.end(); map_it++)
+    int colorSetIndex = 0;
+    for(vec_it = colour_sets.begin(); vec_it != colour_sets.end(); vec_it++, colorSetIndex++)
     {
-      colourIndex[map_it->first - 1] = offset;
+      colourIndex[colorSetIndex] = offset;
 
-      for(vector_it = map_it->second.begin(); vector_it != map_it->second.end(); vector_it++)
+      for(vector_it = (*vec_it)->begin();
+          vector_it != (*vec_it)->end();
+          vector_it++)
         colourArray[offset++] = *vector_it;
     }
 
     colourIndex[colour_sets.size()] = offset;
   }
 
-  void NEListToArray(const std::vector< std::set<index_t> > & NEList)
+  void NEListToArray(const std::vector< std::set<size_t> > & NEList)
   {
-    typename std::vector< std::set<index_t> >::const_iterator vec_it;
-    typename std::set<index_t>::const_iterator set_it;
-    index_t offset = 0;
-    index_t index = 0;
+    std::vector< std::set<size_t> >::const_iterator vec_it;
+    std::set<size_t>::const_iterator set_it;
+    size_t offset = 0;
+    size_t index = 0;
 
     for(vec_it = NEList.begin(); vec_it != NEList.end(); vec_it++)
       offset += vec_it->size();
 
     NEListArray_size = offset;
 
-    NEListIndex = new index_t[NNodes+1];
-    NEListArray = new index_t[NEListArray_size];
+    NEListIndex = new size_t[NNodes+1];
+    NEListArray = new size_t[NEListArray_size];
 
     offset = 0;
 
@@ -346,7 +349,7 @@ private:
   }
 
   template<typename type>
-  inline void copyArrayToDevice(const type * array, CUdeviceptr & CUDA_array, index_t array_size)
+  inline void copyArrayToDevice(type * array, CUdeviceptr & CUDA_array, size_t array_size)
   {
     if(cuMemAlloc(&CUDA_array, array_size * sizeof(type)) != CUDA_SUCCESS)
     {
@@ -358,13 +361,13 @@ private:
   }
 
   template<typename type>
-  inline void copyArrayToDeviceNoAlloc(const type * array, CUdeviceptr & CUDA_array, index_t array_size)
+  inline void copyArrayToDeviceNoAlloc(const type * array, CUdeviceptr & CUDA_array, size_t array_size)
   {
     cuMemcpyHtoD(CUDA_array, array, array_size * sizeof(type));
   }
 
   template<typename type>
-  inline void copyArrayFromDevice(type * array, CUdeviceptr & CUDA_array, index_t array_size)
+  inline void copyArrayFromDevice(type * array, CUdeviceptr & CUDA_array, size_t array_size)
   {
     cuMemcpyDtoH(array, CUDA_array, array_size * sizeof(type));
   }
@@ -384,7 +387,7 @@ private:
 
   unsigned int threadsPerBlock, blocksPerGrid;
 
-  index_t NNodes, NElements, NSElements, ndims, nloc;
+  size_t NNodes, NElements, NSElements, ndims, nloc;
 
   CUdeviceptr CUDA_coords;
   CUdeviceptr CUDA_metric;
@@ -395,22 +398,22 @@ private:
   CUdeviceptr CUDA_smoothStatus;
   CUdeviceptr CUDA_activeVertices;
 
-  index_t * NNListArray;
-  index_t * NNListIndex;
+  size_t * NNListArray;
+  size_t * NNListIndex;
   CUdeviceptr CUDA_NNListArray;
   CUdeviceptr CUDA_NNListIndex;
-  index_t NNListArray_size;
+  size_t NNListArray_size;
 
-  index_t * NEListArray;
-  index_t * NEListIndex;
+  size_t * NEListArray;
+  size_t * NEListIndex;
   CUdeviceptr CUDA_NEListArray;
   CUdeviceptr CUDA_NEListIndex;
-  index_t NEListArray_size;
+  size_t NEListArray_size;
 
-  index_t * colourArray;
-  index_t* colourIndex;
+  size_t * colourArray;
+  size_t* colourIndex;
   CUdeviceptr CUDA_colourArray;
-  index_t NColours;
+  size_t NColours;
 
   CUdeviceptr CUDA_orientation;
 };

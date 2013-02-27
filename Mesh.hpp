@@ -68,16 +68,12 @@ public:
   inline DEVICE double element_quality(size_t eid) const;
   Quality get_mesh_quality() const;
 
-  int get_orientation() {
-    return orientation;
-  }
+  int orientation;
 
 private:
   void create_adjacency();
   void find_surface();
   void set_orientation();
-
-  int orientation;
 };
 
 #endif /* MESH_HPP_ */

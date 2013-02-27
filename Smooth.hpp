@@ -10,9 +10,11 @@
 #include <vector>
 
 #include "Mesh.hpp"
-void delete_vector(std::vector<std::vector<size_t>* > vec);
-std::vector<std::vector<size_t>*> color(Mesh *mesh);
-void smooth(Mesh *mesh, size_t niter);
-void smooth_vector(Mesh* mesh, size_t vid);
+// void delete_vector(std::vector<std::vector<size_t>* > vec);
+// std::vector<std::vector<size_t>*> color(Mesh *mesh);
+void smooth(Mesh *mesh,
+            size_t niter,
+            const std::vector<std::vector<size_t>*>& colorings);
+// void smooth_vector(Mesh* mesh, size_t vid);
 
 #endif /* SMOOTH_HPP_ */

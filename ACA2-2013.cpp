@@ -10,6 +10,7 @@
 
 #include "Mesh.hpp"
 #include "Smooth.hpp"
+#include "Color.hpp"
 
 double get_wtime(){
     struct timeval tic;
@@ -31,6 +32,8 @@ int main(int argc, char **argv){
 
   Mesh *mesh = new Mesh(argv[1]);
 
+  std::vector<std::vector<size_t>*> colourings = Color::color(mesh);
+
   Quality q = mesh->get_mesh_quality();
 
   std::cout << "Initial quality:\n"
@@ -38,7 +41,7 @@ int main(int argc, char **argv){
             << "Quality min:   " << q.min << std::endl;
 
   double time = get_wtime();
-  smooth(mesh, 200);
+  smooth(mesh, 200, colourings);
   double time_smooth = get_wtime() - time;
 
   q = mesh->get_mesh_quality();
