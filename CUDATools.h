@@ -244,7 +244,7 @@ public:
 
   void launchSmoothingKernel(int colour)
   {
-    CUdeviceptr CUDA_ColourSetAddr = CUDA_colourArray + colourIndex[--colour] * sizeof(size_t);
+    CUdeviceptr CUDA_ColourSetAddr = CUDA_colourArray + colourIndex[colour] * sizeof(size_t);
     size_t NNodesInSet = colourIndex[colour+1] - colourIndex[colour];
     threadsPerBlock = 32;
     blocksPerGrid = (NNodesInSet + threadsPerBlock - 1) / threadsPerBlock;
@@ -254,7 +254,7 @@ public:
     CUresult result = cuLaunchKernel(smoothKernel, blocksPerGrid, 1, 1, threadsPerBlock, 1, 1, 0, 0, args, NULL);
     if(result != CUDA_SUCCESS)
     {
-      std::cout << "Error launching CUDA kernel for colour " << colour << std::endl;
+      std::cout << "Error launching CUDA kernel for colour " << colour << " result "<< result << std::endl;      
       return;
     }
 

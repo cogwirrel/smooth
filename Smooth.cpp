@@ -30,7 +30,7 @@ void Smooth::smooth(Mesh* mesh,
 
         cudaTools.copyCoordinatesToDevice(mesh);
         cudaTools.copyMetricToDevice(mesh);
-  //      cudaTools.launchSmoothingKernel(ic);
+        cudaTools.launchSmoothingKernel(ic);
         cudaTools.copyCoordinatesFromDevice(mesh);
         cudaTools.copyMetricFromDevice(mesh);
       }
