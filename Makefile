@@ -1,7 +1,7 @@
 BUILD = cx1
 
 vtkinclude.cx1 = -I/apps/vtk/5.10.1/include/vtk-5.10 -I./
-vtkinclude.labs = -I/usr/include/vtk-5.8 -I./
+vtkinclude.labs = -I/usr/include/vtk-5.8 -I./ -I/usr/local/cuda/include/
 vtkinclude.mac = -I/usr/local/opt/vtk/include/vtk-5.10 -I/usr/local/cuda/include/ -I./
 
 vtklibs.cx1 = -L/apps/vtk/5.10.1/lib/vtk-5.10 -lvtkCommon -lvtksys
