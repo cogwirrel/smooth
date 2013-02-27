@@ -113,7 +113,7 @@ public:
   }
 
   void copyMeshDataToDevice(Mesh * mesh,
-      std::vector<std::vector<size_t>*>& colour_sets, std::vector<double>  & quality,
+      std::vector<std::vector<size_t>*>& colour_sets,
       size_t dimensions)
   {
     ndims = dimensions;
@@ -148,7 +148,7 @@ public:
     SET_CONSTANT(coords)
     SET_CONSTANT(metric)
     SET_CONSTANT(normals)
-    SET_CONSTANT(quality)
+    //SET_CONSTANT(quality)
     SET_CONSTANT(ENList)
     SET_CONSTANT(NNListArray)
     SET_CONSTANT(NNListIndex)
@@ -222,7 +222,7 @@ public:
     cuMemFree(CUDA_coords);
     cuMemFree(CUDA_metric);
     cuMemFree(CUDA_normals);
-    cuMemFree(CUDA_quality);
+    //cuMemFree(CUDA_quality);
     cuMemFree(CUDA_ENList);
     cuMemFree(CUDA_coplanar_ids);
     cuMemFree(CUDA_NNListArray);
@@ -394,7 +394,7 @@ private:
   CUdeviceptr CUDA_coplanar_ids; // TODO ???
   CUdeviceptr CUDA_normals;
   CUdeviceptr CUDA_ENList;
-  CUdeviceptr CUDA_quality;
+  //CUdeviceptr CUDA_quality;
   CUdeviceptr CUDA_smoothStatus;
   CUdeviceptr CUDA_activeVertices;
 

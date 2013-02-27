@@ -93,7 +93,7 @@ void Mesh::create_adjacency(){
   }
 }
 
-DEVICE void Mesh::find_surface(){
+void Mesh::find_surface(){
   // Initialise all normal vectors to (0.0,0.0).
   normals.resize(2*NNodes, 0.0);
 
