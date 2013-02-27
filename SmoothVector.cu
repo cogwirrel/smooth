@@ -109,10 +109,7 @@ __global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
   for (int ne_index = NEListIndex[vid];
        ne_index < NEListIndex[vid + 1];
        ++ne_index) {
-    double quality = element_quality(NEListArray[ne_index]);
-    if (quality < worst_q) {
-      worst_q = quality;
-    }
+    worst_q = min(worst_q, element_quality(NEListArray[ne_index]));
   }
 
   // Find the barycentre (centre of mass) of the cavity. A cavity is
@@ -214,10 +211,7 @@ __global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
   for (int ne_index = NEListIndex[vid];
        ne_index < NEListIndex[vid + 1];
        ++ne_index) {
-    double quality = element_quality(NEListArray[ne_index]);
-    if (quality < new_worst_q) {
-      new_worst_q = quality;
-    }
+    new_worst_q = min(new_worst_q, element_quality(NEListArray[ne_index]));
   }
 
 
