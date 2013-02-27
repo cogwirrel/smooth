@@ -128,7 +128,7 @@ public:
 
     // and copy everything to the device
     copyArrayToDevice<double>(&mesh->coords[0], CUDA_coords, NNodes * ndims);
-    copyArrayToDevice<double>(&mesh->metric[0], CUDA_metric, NNodes * ndims * ndims);
+    copyArrayToDevice<double>(&mesh->metric[0], CUDA_metric, NNodes * nloc); //TODO is thhis right?
     copyArrayToDevice<double>(&mesh->normals[0], CUDA_normals, NNodes * ndims);
     copyArrayToDevice<size_t>(&mesh->ENList[0], CUDA_ENList, NElements * nloc);
     copyArrayToDevice<size_t>(NNListArray, CUDA_NNListArray, NNListArray_size);
@@ -166,7 +166,7 @@ public:
 
   void copyMetricToDevice(Mesh* mesh)
   {
-    copyArrayToDeviceNoAlloc<double>(&mesh->metric[0], CUDA_metric, NNodes * ndims * ndims);
+    copyArrayToDeviceNoAlloc<double>(&mesh->metric[0], CUDA_metric, NNodes * nloc);
   }
 
   void copyCoordinatesFromDevice(Mesh* mesh)
