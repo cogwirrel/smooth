@@ -267,15 +267,16 @@ private:
 
     size_t offset = 0;
 
-    int colorSetIndex = 0;
+    size_t colorSetIndex = 0;
     for(vec_it = colour_sets.begin(); vec_it != colour_sets.end(); vec_it++, colorSetIndex++)
     {
       colourIndex[colorSetIndex] = offset;
 
       for(vector_it = (*vec_it)->begin();
           vector_it != (*vec_it)->end();
-          vector_it++)
-        colourArray[offset++] = *vector_it;
+          vector_it++, offset++) {
+        colourArray[offset] = *vector_it;
+      }
     }
 
     colourIndex[colour_sets.size()] = offset;
