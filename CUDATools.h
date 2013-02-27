@@ -129,6 +129,7 @@ public:
     // and copy everything to the device
     copyArrayToDevice<double>(&mesh->coords[0], CUDA_coords, NNodes * ndims);
     copyArrayToDevice<double>(&mesh->metric[0], CUDA_metric, NNodes * ndims * ndims);
+    copyArrayToDevice<double>(&mesh->normals[0], CUDA_normals, NNodes * ndims);
     //copyArrayToDevice(&quality[0], CUDA_quality, NElements);
     copyArrayToDevice<size_t>(&mesh->ENList[0], CUDA_ENList, NElements * nloc);
     copyArrayToDevice(NNListArray, CUDA_NNListArray, NNListArray_size);
