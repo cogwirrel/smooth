@@ -97,9 +97,9 @@ public:
       }
 
       //TODO: modify makefile to load this
-      if(cuModuleLoad(&smoothModule, "Smooth.cubin") != CUDA_SUCCESS)
+      if(cuModuleLoad(&smoothModule, "SmoothVector.cubin") != CUDA_SUCCESS)
       {
-        std::cout << "Error loading CUDA module \"Smooth\"" << std::endl;
+        std::cout << "Error loading CUDA cubin module \"Smooth\"" << std::endl;
         return;
       }
 

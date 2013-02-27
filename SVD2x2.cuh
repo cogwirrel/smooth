@@ -13,7 +13,6 @@
  */
 #include <math.h>
 
-#include "SVD2x2.hpp"
 
 /*
  * Calculates the eigenvalues of a 2x2 matrix A
