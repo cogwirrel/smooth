@@ -161,17 +161,17 @@ public:
 
   void copyCoordinatesToDevice(Mesh* mesh)
   {
-    copyArrayToDeviceNoAlloc(&mesh->coords[0], CUDA_coords, NNodes * ndims);
+    copyArrayToDeviceNoAlloc<double>(&mesh->coords[0], CUDA_coords, NNodes * ndims);
   }
 
   void copyMetricToDevice(Mesh* mesh)
   {
-    copyArrayToDeviceNoAlloc(&mesh->metric[0], CUDA_metric, NNodes * ndims * ndims);
+    copyArrayToDeviceNoAlloc<double>(&mesh->metric[0], CUDA_metric, NNodes * ndims * ndims);
   }
 
   void copyCoordinatesFromDevice(Mesh* mesh)
   {
-    copyArrayFromDevice(&mesh->coords[0], CUDA_coords, NNodes * ndims);
+    copyArrayFromDevice<double>(&mesh->coords[0], CUDA_coords, NNodes * ndims);
   }
 
   void copyMetricFromDevice(Mesh* mesh)
