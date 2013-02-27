@@ -130,13 +130,12 @@ public:
     copyArrayToDevice<double>(&mesh->coords[0], CUDA_coords, NNodes * ndims);
     copyArrayToDevice<double>(&mesh->metric[0], CUDA_metric, NNodes * ndims * ndims);
     copyArrayToDevice<double>(&mesh->normals[0], CUDA_normals, NNodes * ndims);
-    //copyArrayToDevice(&quality[0], CUDA_quality, NElements);
     copyArrayToDevice<size_t>(&mesh->ENList[0], CUDA_ENList, NElements * nloc);
-    copyArrayToDevice(NNListArray, CUDA_NNListArray, NNListArray_size);
-    copyArrayToDevice(NNListIndex, CUDA_NNListIndex, NNodes+1);
-    copyArrayToDevice(colourArray, CUDA_colourArray, NNodes);
-    copyArrayToDevice(NEListArray, CUDA_NEListArray, NEListArray_size);
-    copyArrayToDevice(NEListIndex, CUDA_NEListIndex, NNodes+1);
+    copyArrayToDevice<size_t>(NNListArray, CUDA_NNListArray, NNListArray_size);
+    copyArrayToDevice<size_t>(NNListIndex, CUDA_NNListIndex, NNodes+1);
+    copyArrayToDevice<size_t>(colourArray, CUDA_colourArray, NNodes);
+    copyArrayToDevice<size_t>(NEListArray, CUDA_NEListArray, NEListArray_size);
+    copyArrayToDevice<size_t>(NEListIndex, CUDA_NEListIndex, NNodes+1);
 
     //set the constant symbols of the smoothing-kernel, i.e. the addresses of all arrays copied above
     CUdeviceptr address; // TODO ????
@@ -149,14 +148,11 @@ public:
     SET_CONSTANT(coords)
     SET_CONSTANT(metric)
     SET_CONSTANT(normals)
-    //SET_CONSTANT(quality)
     SET_CONSTANT(ENList)
     SET_CONSTANT(NNListArray)
     SET_CONSTANT(NNListIndex)
     SET_CONSTANT(NEListArray)
     SET_CONSTANT(NEListIndex)
-    SET_CONSTANT(coplanar_ids) // TODO what?
-    SET_CONSTANT(smoothStatus)
 
     // set element orientation in CUDA smoothing kernel
     cuModuleGetGlobal(&CUDA_orientation, &symbol_size, smoothModule, "orientation");
@@ -183,41 +179,6 @@ public:
     copyArrayFromDevice<double>((double *) &mesh->metric[0], CUDA_metric, NNodes * ndims * ndims);
   }
 
-  void reserveSmoothStatusMemory()
-  {
-    if(cuMemAlloc(&CUDA_smoothStatus, NNodes * sizeof(unsigned char)) != CUDA_SUCCESS)
-    {
-      std::cout << "Error allocating CUDA memory" << std::endl;
-      exit(1);
-    }
-
-    // set the constant symbol in CUDA smoothing kernel
-    CUdeviceptr address;
-    size_t symbol_size;
-    cuModuleGetGlobal(&address, &symbol_size, smoothModule, "smoothStatus");
-    cuMemcpyHtoD(address, &CUDA_smoothStatus, symbol_size);
-  }
-
-  void reserveActiveVerticesMemory()
-  {
-    if(cuMemAlloc(&CUDA_activeVertices, NNodes * sizeof(unsigned char)) != CUDA_SUCCESS)
-    {
-      std::cout << "Error allocating CUDA memory" << std::endl;
-      exit(1);
-    }
-
-    // set the constant symbol in CUDA smoothing kernel
-    CUdeviceptr address;
-    size_t symbol_size;
-    cuModuleGetGlobal(&address, &symbol_size, smoothModule, "activeVertices");
-    cuMemcpyHtoD(address, &CUDA_activeVertices, symbol_size);
-  }
-
-  void retrieveSmoothStatus(std::vector<unsigned char> & status)
-  {
-    copyArrayFromDevice<unsigned char>( (unsigned char *) &status[0], CUDA_smoothStatus, NNodes);
-  }
-
   void freeResources()
   {
     cuMemFree(CUDA_coords);
@@ -225,13 +186,13 @@ public:
     cuMemFree(CUDA_normals);
     //cuMemFree(CUDA_quality);
     cuMemFree(CUDA_ENList);
-    cuMemFree(CUDA_coplanar_ids);
+    // cuMemFree(CUDA_coplanar_ids);
     cuMemFree(CUDA_NNListArray);
     cuMemFree(CUDA_NNListIndex);
     cuMemFree(CUDA_colourArray);
     cuMemFree(CUDA_NEListArray);
     cuMemFree(CUDA_NEListIndex);
-    cuMemFree(CUDA_smoothStatus);
+    // cuMemFree(CUDA_smoothStatus);
 
     delete[] NNListArray;
     delete[] NNListIndex;
@@ -255,7 +216,7 @@ public:
     CUresult result = cuLaunchKernel(smoothKernel, blocksPerGrid, 1, 1, threadsPerBlock, 1, 1, 0, 0, args, NULL);
     if(result != CUDA_SUCCESS)
     {
-      std::cout << "Error launching CUDA kernel for colour " << colour << " result "<< result << std::endl;      
+      std::cout << "Error launching CUDA kernel for colour " << colour << " result "<< result << std::endl;
       return;
     }
 
@@ -392,12 +353,8 @@ private:
 
   CUdeviceptr CUDA_coords;
   CUdeviceptr CUDA_metric;
-  CUdeviceptr CUDA_coplanar_ids; // TODO ???
   CUdeviceptr CUDA_normals;
   CUdeviceptr CUDA_ENList;
-  //CUdeviceptr CUDA_quality;
-  CUdeviceptr CUDA_smoothStatus;
-  CUdeviceptr CUDA_activeVertices;
 
   size_t * NNListArray;
   size_t * NNListIndex;

@@ -21,7 +21,6 @@ void Smooth::smooth(Mesh* mesh,
 
   if(cudaTools.isEnabled()) {
     cudaTools.copyMeshDataToDevice(mesh, colorings, 2); // TODO do we need a quality? (NULL for now)
-    cudaTools.reserveSmoothStatusMemory();
    // For the specified number of iterations, loop over all mesh vertices.
     for(size_t iter=0; iter<niter; ++iter){
 
