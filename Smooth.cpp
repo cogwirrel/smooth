@@ -19,21 +19,21 @@ void Smooth::smooth(Mesh* mesh,
 
   cudaTools.initialize();
 
-  // if(cudaTools.isEnabled()) {
-  //   cudaTools.copyMeshDataToDevice(mesh, colorings, 2); // TODO do we need a quality? (NULL for now)
-  //   cudaTools.reserveSmoothStatusMemory();
-  // // For the specified number of iterations, loop over all mesh vertices.
-  //   for(size_t iter=0; iter<niter; ++iter){
+  if(cudaTools.isEnabled()) {
+    cudaTools.copyMeshDataToDevice(mesh, colorings, 2); // TODO do we need a quality? (NULL for now)
+    cudaTools.reserveSmoothStatusMemory();
+   // For the specified number of iterations, loop over all mesh vertices.
+    for(size_t iter=0; iter<niter; ++iter){
 
-  //     // Loop over colouring groups
-  //     for(unsigned int ic = 0; ic < colorings.size(); ++ic) {
+       // Loop over colouring groups
+      for(unsigned int ic = 0; ic < colorings.size(); ++ic) {
 
-  //         cudaTools.copyCoordinatesToDevice(mesh);
-  //         cudaTools.copyMetricToDevice(mesh);
-  //         cudaTools.launchSmoothingKernel(ic);
-  //         cudaTools.copyCoordinatesFromDevice(mesh);
-  //         cudaTools.copyMetricFromDevice(mesh);
-  //     }
-  //   }
-  // }
+        cudaTools.copyCoordinatesToDevice(mesh);
+        cudaTools.copyMetricToDevice(mesh);
+  //      cudaTools.launchSmoothingKernel(ic);
+        cudaTools.copyCoordinatesFromDevice(mesh);
+        cudaTools.copyMetricFromDevice(mesh);
+      }
+    }
+  }
 }
