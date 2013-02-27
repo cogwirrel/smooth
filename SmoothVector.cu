@@ -233,34 +233,4 @@ __global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
 }
 
 #endif
-// void runCudaImplementation(Mesh* mesh, std::vector<size_t>* vids) {
-//         /***********************************************/
-//   // Device copy of vids
-//   size_t* d_vids;
 
-//   // Size of vids
-//   size_t vid_size = vids->size() * sizeof(size_t);
-
-//   // Allocate space for vids on device
-//   cudaMalloc((void **)&d_vids, vid_size);
-
-//   // Copy host vids to device d_vids
-//   cudaMemcpy(d_vids, &vids[0], vid_size, cudaMemcpyHostToDevice);
-
-//   // Device copy of mesh
-//   Mesh* d_mesh;
-//   size_t mesh_size = sizeof(mesh);
-//   cudaMalloc((void**)&d_mesh, mesh_size);
-//   cudaMemcpy(d_mesh, mesh, mesh_size, cudaMemcpyHostToDevice);
-
-//   // Kick off parallel execution - one block per vid in vids
-//   smooth_vector<<<vids->size(), 1>>>(d_mesh, d_vids);
-
-//   // Copy result back to host
-//   cudaMemcpy(mesh, d_mesh, mesh_size, cudaMemcpyDeviceToHost);
-
-//   // Clean up everything bar result
-//   free(vids);
-//   cudaFree(d_vids);
-//   cudaFree(d_mesh);
-// }

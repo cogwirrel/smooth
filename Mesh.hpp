@@ -55,6 +55,7 @@ public:
   std::vector< std::set<size_t> > NEList;
 
   double element_area(size_t eid) const;
+  double element_quality(size_t eid) const;
   Quality get_mesh_quality() const;
 
   int orientation;
