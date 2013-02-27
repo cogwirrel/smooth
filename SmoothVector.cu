@@ -1,41 +1,59 @@
-#include "SVD2x2.hpp"
+#ifndef CUDASMOOTH_H
+#define CUDASMOOTH_H
+
+#include "SVD2x2.cuh"
+
+#include <cuda.h>
 //TODO How do i use cuda standard library?
+extern "C" {
 
-// TODO: Do we need some special indexing here?
-bool isCornerNode(size_t vid) {
-  return abs(CUDA_normals[2*vid])==1.0 && abs(CUDA_normals[2*vid+1]==1.0);
+__constant__ double* coords;
+__constant__ double* metric;
+__constant__ double* normals;
+// __constant__ real_t * quality;
+__constant__ size_t* ENList;
+__constant__ size_t* NNListArray;
+__constant__ size_t* NNListIndex;
+__constant__ size_t* NEListArray;
+__constant__ size_t* NEListIndex;
+__constant__ int* orientation;
+
+
+__device__ bool isCornerNode(size_t vid) {
+  return fabs(normals[2*vid])==1.0 && fabs(normals[2*vid+1])==1.0;
 }
 
-//TODO: Do we need some special indexing here?
-bool isSurfaceNode(size_t vid) {
-  return CUDA_NEList[vid].size() < CUDA_NNList[vid].size();
+__device__ bool isSurfaceNode(size_t vid) {
+  int NE_size = NEListIndex[vid + 1] - NEListIndex[vid];
+  int NN_size = NNListIndex[vid + 1] - NNListIndex[vid];
+  return NE_size < NN_size;
 }
 
-double element_area(size_t eid) {
-  const size_t *n = &CUDA_ENList[3*eid];
+__device__ double element_area(size_t eid) {
+  const size_t *n = &ENList[3*eid];
 
   //Pointers to the coorindates of each vertex
-  const double *c0 = &CUDA_coords[2*n[0]];
-  const double *c1 = &CUDA_coords[2*n[1]];
-  const double *c2 = &CUDA_coords[2*n[2]];
+  const double *c0 = &coords[2*n[0]];
+  const double *c1 = &coords[2*n[1]];
+  const double *c2 = &coords[2*n[2]];
 
-  return orientation * 0.5 * 
+  return *orientation * 0.5 *
           ((c0[1] - c2[1]) * (c0[0] - c1[0]) -
            (c0[1] - c1[1]) * (c0[0] - c2[0]));
 }
 
-double element_quality(size_t eid) {
-  const size_t *n = &CUDA_ENList[3*eid];
+__device__ double element_quality(size_t eid) {
+  const size_t *n = &ENList[3*eid];
 
   // Pointers to the coordinates of each vertex
-  const double *c0 = &CUDA_coords[2*n[0]];
-  const double *c1 = &CUDA_coords[2*n[1]];
-  const double *c2 = &CUDA_coords[2*n[2]];
+  const double *c0 = &coords[2*n[0]];
+  const double *c1 = &coords[2*n[1]];
+  const double *c2 = &coords[2*n[2]];
 
   // Pointers to the metric tensor at each vertex
-  const double *m0 = &CUDA_metric[3*n[0]];
-  const double *m1 = &CUDA_metric[3*n[1]];
-  const double *m2 = &CUDA_metric[3*n[2]];
+  const double *m0 = &metric[3*n[0]];
+  const double *m1 = &metric[3*n[1]];
+  const double *m2 = &metric[3*n[2]];
 
   // Metric tensor averaged over the element
   double m00 = (m0[0] + m1[0] + m2[0])/3;
@@ -68,10 +86,17 @@ double element_quality(size_t eid) {
 }
 
 //TODO: WHat are the params?
-__global__ void smooth() {
-  size_t vid = vids[blockIdx.x];
-  if(isCornerNode(vid))
+__global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
+
+  const size_t threadID = blockIdx.x * blockDim.x + threadIdx.x;
+  if(threadID >= NNodesInSet)
     return;
+
+  size_t vid = colourSet[threadID];
+
+  if(isCornerNode(vid)) {
+    return;
+  }
 
   // Find the quality of the worst element adjacent to vid
   double worst_q=1.0;
@@ -81,10 +106,10 @@ __global__ void smooth() {
   // }
 
   // Find begining of each vid
-  for (int ne_index = CUDA_NEIndex[ne_start]; 
-       ne_index < CUDA_NEIndex[ne_start + 1]; 
+  for (int ne_index = NEListIndex[vid];
+       ne_index < NEListIndex[vid + 1];
        ++ne_index) {
-    double quality = element_quality(CUDA_NEListArray[ne_index]);
+    double quality = element_quality(NEListArray[ne_index]);
     if (quality < worst_q) {
       worst_q = quality;
     }
@@ -100,10 +125,10 @@ __global__ void smooth() {
    * the two metric tensors of the vertices defining the edge.
    */
 
-  const double * m0 = CUDA_metric[3*vid];
+  const double * m0 = &metric[3*vid];
 
-  double x0 = CUDA_coords[2*vid];
-  double y0 = CUDA_coords[2*vid+1];
+  double x0 = coords[2*vid];
+  double y0 = coords[2*vid+1];
 
   double A[4] = {0.0, 0.0, 0.0, 0.0};
   double q[2] = {0.0, 0.0};
@@ -111,21 +136,21 @@ __global__ void smooth() {
   // Iterate over all edges and assemble matrices A and q.
   // for(std::vector<size_t>::const_iterator it=mesh->NNList[vid].begin();
   //     it!=mesh->NNList[vid].end(); ++it){
-  for (int nn_index = CUDA_NNIndex[vid];
-       nn_index < CUDA_NNIndex[vid + 1];
+  for (int nn_index = NNListIndex[vid];
+       nn_index < NNListIndex[vid + 1];
        ++nn_index) {
-      
-      size_t il = CUDA_NNListArray[nn_index];
 
-      const double *m1 = &mesh->metric[3*il];
+      size_t il = NNListArray[nn_index];
+
+      const double *m1 = &metric[3*il];
 
       // Find the metric in the middle of the edge.
       double ml00 = 0.5*(m0[0] + m1[0]);
       double ml01 = 0.5*(m0[1] + m1[1]);
       double ml11 = 0.5*(m0[2] + m1[2]);
 
-      double x = CUDA_coords[2*il] - x0;
-      double y = CUDA_coords[2*il+1] - y0;
+      double x = coords[2*il] - x0;
+      double y = coords[2*il+1] - y0;
 
       // Calculate and accumulate the contribution of
       // this vertex to the barycentre of the cavity.
@@ -143,70 +168,71 @@ __global__ void smooth() {
     // Displacement vector for vid
     double p[2];
 
-    /* The displacement p for vid is found by solving the linear system:
-     * ┌─       ─┐   ┌    ┐   ┌    ┐
-     * │A[0] A[1]│   │p[0]│   │q[0]│
-     * │         │ x │    │ = │    │
-     * │A[2] A[3]│   │p[1]│   │q[0]│
-     * └─       ─┘   └    ┘   └    ┘
-     */
-    svd_solve_2x2(A, p, q);
+  /* The displacement p for vid is found by solving the linear system:
+   * ┌─       ─┐   ┌    ┐   ┌    ┐
+   * │A[0] A[1]│   │p[0]│   │q[0]│
+   * │         │ x │    │ = │    │
+   * │A[2] A[3]│   │p[1]│   │q[0]│
+   * └─       ─┘   └    ┘   └    ┘
+   */
+   svd_solve_2x2(A, p, q);
 
-    /* If this is a surface vertex, restrict the displacement
-     * to the surface. The new displacement is the projection
-     * of the old displacement on the surface.
-     */
-    if(isSurfaceNode(vid)){
-      p[0] -= p[0]*fabs(CUDA_normals[2*vid]);
-      p[1] -= p[1]*fabs(CUDA_normals[2*vid+1]);
+  /* If this is a surface vertex, restrict the displacement
+   * to the surface. The new displacement is the projection
+   * of the old displacement on the surface.
+   */
+  if(isSurfaceNode(vid)){
+    p[0] -= p[0]*fabs(normals[2*vid]);
+    p[1] -= p[1]*fabs(normals[2*vid+1]);
+  }
+
+  // Update the coordinates
+  coords[2*vid] += p[0];
+  coords[2*vid+1] += p[1];
+
+  /************************************************************************
+   * At this point we must also interpolate the metric tensors from all   *
+   * neighbouring vertices in order to calculate the new value of vid's   *
+   * metric tensor at the new location. This is a quite complex procedure *
+   * and has been omitted for simplicity of the exercise. A vertex will   *
+   * always use its original metric tensor, no matter whether it has been *
+   * relocated or not.                                                    *
+   ************************************************************************/
+
+  /* Find the quality of the worst element after smoothing. If an element
+   * of the cavity was inverted, i.e. if vid was relocated outside the
+   * interior convex hull of the cavity, then the calculated area of that
+   * element will be negative and mesh->element_quality() will return a
+   * negative number. In such a case, the smoothing operation has to be
+   * rejected.
+   */
+  double new_worst_q=1.0;
+  // for(std::set<size_t>::const_iterator it=mesh->NEList[vid].begin();
+      // it!=mesh->NEList[vid].end(); ++it){
+    // new_worst_q = std::min(new_worst_q, mesh->element_quality(*it));
+  // }
+  for (int ne_index = NEListIndex[vid];
+       ne_index < NEListIndex[vid + 1];
+       ++ne_index) {
+    double quality = element_quality(NEListArray[ne_index]);
+    if (quality < new_worst_q) {
+      new_worst_q = quality;
     }
-
-    // Update the coordinates
-    CUDA_coords[2*vid] += p[0];
-    CUDA_coords[2*vid+1] += p[1];
-
-    /************************************************************************
-     * At this point we must also interpolate the metric tensors from all   *
-     * neighbouring vertices in order to calculate the new value of vid's   *
-     * metric tensor at the new location. This is a quite complex procedure *
-     * and has been omitted for simplicity of the exercise. A vertex will   *
-     * always use its original metric tensor, no matter whether it has been *
-     * relocated or not.                                                    *
-     ************************************************************************/
-
-    /* Find the quality of the worst element after smoothing. If an element
-     * of the cavity was inverted, i.e. if vid was relocated outside the
-     * interior convex hull of the cavity, then the calculated area of that
-     * element will be negative and mesh->element_quality() will return a
-     * negative number. In such a case, the smoothing operation has to be
-     * rejected.
-     */
-    double new_worst_q=1.0;
-    // for(std::set<size_t>::const_iterator it=mesh->NEList[vid].begin();
-        // it!=mesh->NEList[vid].end(); ++it){
-      // new_worst_q = std::min(new_worst_q, mesh->element_quality(*it));
-    // }
-    for (int ne_index = CUDA_NEIndex[ne_start]; 
-         ne_index < CUDA_NEIndex[ne_start + 1]; 
-         ++ne_index) {
-      double quality = element_quality(CUDA_NEListArray[ne_index]);
-      if (quality < new_worst_q) {
-        new_worst_q = quality;
-      }
-    }
+  }
 
 
-    /* If quality is worse than before, either because of element inversion
-     * or just because relocating vid to the barycentre of the cavity does
-     * not improve quality, revert the changes.
-     */
-    if(new_worst_q < worst_q){
-      CUDA_coords[2*vid] -= p[0];
-      CUDA_coords[2*vid+1] -= p[1];
-    }
-  } 
+  /* If quality is worse than before, either because of element inversion
+   * or just because relocating vid to the barycentre of the cavity does
+   * not improve quality, revert the changes.
+   */
+  if(new_worst_q < worst_q){
+    coords[2*vid] -= p[0];
+    coords[2*vid+1] -= p[1];
+  }
+}
 }
 
+#endif
 // void runCudaImplementation(Mesh* mesh, std::vector<size_t>* vids) {
 //         /***********************************************/
 //   // Device copy of vids
@@ -220,7 +246,7 @@ __global__ void smooth() {
 
 //   // Copy host vids to device d_vids
 //   cudaMemcpy(d_vids, &vids[0], vid_size, cudaMemcpyHostToDevice);
-  
+
 //   // Device copy of mesh
 //   Mesh* d_mesh;
 //   size_t mesh_size = sizeof(mesh);

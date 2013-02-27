@@ -6,6 +6,13 @@
 
 #include <math.h>
 
+/*
+ * Calculates the eigenvalues of a 2x2 matrix A
+ * eigenvalues[0] contains the largest eigenvalue
+ * eigenvalues[1] contains the smallest eigenvalue
+ */
+#include <math.h>
+
 #include "SVD2x2.hpp"
 
 /*
@@ -13,7 +20,7 @@
  * eigenvalues[0] contains the largest eigenvalue
  * eigenvalues[1] contains the smallest eigenvalue
  */
-DEVICE void calc_eigenvalues(const double **A, double **eigenvalues){
+__device__ void calc_eigenvalues(const double A[4], double eigenvalues[2]){
   double b, discriminant;
 
   b = A[0]+A[3];
@@ -28,8 +35,8 @@ DEVICE void calc_eigenvalues(const double **A, double **eigenvalues){
  * Calculates the eigenvectors of a 2x2 matrix A
  * given the sorted (largest to smallest) array of eigenvalues
  */
-DEVICE void calc_eigenvectors(const double A[4]*,
-    const double eigenvalues[2]*, double eigenvectors[4]*){
+__device__ void calc_eigenvectors(const double A[4],
+    const double eigenvalues[2], double eigenvectors[4]){
   double D[4];
   double proportion;
 
@@ -115,10 +122,11 @@ DEVICE void calc_eigenvectors(const double A[4]*,
   }
 }
 
+
 /*
  * Solves the 2D linear system Ap=q using SVD
  */
-DEVICE void svd_solve_2x2(const double A*, double p*, const double q*){
+__device__ void svd_solve_2x2(const double A[4], double p[2], const double q[2]){
   /*
    * If A is decomposed as A = U * Σ * Vtransp, where:
    *
@@ -136,18 +144,18 @@ DEVICE void svd_solve_2x2(const double A*, double p*, const double q*){
    * Utransp: the transpose of U
    */
 
-  double AAT[4]; // This will be used to store either A*Atransp or Atransp*A
+  double AAT[4]; // This will be used to store either AAtransp or AtranspA
   double eigenvalues[2];
   double U[4];
   double V[4];
 
-  // Caclulate Atransp*A
-  AAT[0] = A[0]*A[0] + A[2]*A[2];
-  AAT[1] = A[0]*A[1] + A[2]*A[3];
+  // Caclulate AtranspA
+  AAT[0] = A[0] * A[0] + A[2] * A[2];
+  AAT[1] = A[0] * A[1] + A[2] * A[3];
   AAT[2] = AAT[1];
-  AAT[3] = A[1]*A[1] + A[3]*A[3];
+  AAT[3] = A[1] * A[1] + A[3] * A[3];
 
-  // Calculate the eigenvalues of AT*A
+  // Calculate the eigenvalues of ATA
   calc_eigenvalues(AAT, eigenvalues);
 
   // Calculate the right singular vector V:
@@ -184,15 +192,15 @@ DEVICE void svd_solve_2x2(const double A*, double p*, const double q*){
    * Calculate the left singular vector U:
    * Singular vectors U and V are unique, up to a free choice of sign. Once V
    * has been defined, the choice for the sign of U is restricted. So, instead
-   * of calculating the eigenvectors of A*AT, U is formed using the formula:
-   * uj = σ_inv(j)*A*vj, where uj (resp. vj) is the j-th column of U (resp. V).
+   * of calculating the eigenvectors of AAT, U is formed using the formula:
+   * uj = σ_inv(j)A*vj, where uj (resp. vj) is the j-th column of U (resp. V).
    *
    * U will be used in its transposed form, so we transpose it here directly...
    */
-  U[0] = eigenvalues[0] * (A[0]*V[0] + A[1]*V[2]);
-  U[1] = eigenvalues[0] * (A[2]*V[0] + A[3]*V[2]);
-  U[2] = eigenvalues[1] * (A[0]*V[1] + A[1]*V[3]);
-  U[3] = eigenvalues[1] * (A[2]*V[1] + A[3]*V[3]);
+  U[0] = eigenvalues[0] * (A[0]*V[0] + A[1] * V[2]);
+  U[1] = eigenvalues[0] * (A[2]*V[0] + A[3] * V[2]);
+  U[2] = eigenvalues[1] * (A[0]*V[1] + A[1] * V[3]);
+  U[3] = eigenvalues[1] * (A[2]*V[1] + A[3] * V[3]);
 
   /*
    * Use AAT to hold intermediate results - spare memory
@@ -219,6 +227,6 @@ DEVICE void svd_solve_2x2(const double A*, double p*, const double q*){
    *
    * p = V * q
    */
-  p[0] = V[0]*q[0] + V[1]*q[1];
-  p[1] = V[2]*q[0] + V[3]*q[1];
+  p[0] = V[0]* q[0] + V[1]* q[1];
+  p[1] = V[2]* q[0] + V[3]* q[1];
 }
