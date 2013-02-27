@@ -115,15 +115,15 @@ __global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
     }
   }
 
-  /* Find the barycentre (centre of mass) of the cavity. A cavity is
-   * defined as the set containing vid and all its adjacent vertices and
-   * triangles. Since we work on metric space, all lengths have to measured
-   * using the metric. The metric tensor is a 2x2 symmetric matrix which
-   * encodes the ideal length and orientation of an edge containing vid. As
-   * an edge is defined by two vertices, we calculate the edge length using
-   * the value of the metric in the middle of the edge, i.e. the average of
-   * the two metric tensors of the vertices defining the edge.
-   */
+  // Find the barycentre (centre of mass) of the cavity. A cavity is
+  // defined as the set containing vid and all its adjacent vertices and
+  // triangles. Since we work on metric space, all lengths have to measured
+  // using the metric. The metric tensor is a 2x2 symmetric matrix which
+  // encodes the ideal length and orientation of an edge containing vid. As
+  // an edge is defined by two vertices, we calculate the edge length using
+  // the value of the metric in the middle of the edge, i.e. the average of
+  // the two metric tensors of the vertices defining the edge.
+
 
   const double * m0 = &metric[3*vid];
 
@@ -168,19 +168,19 @@ __global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
     // Displacement vector for vid
     double p[2];
 
-  /* The displacement p for vid is found by solving the linear system:
-   * ┌─       ─┐   ┌    ┐   ┌    ┐
-   * │A[0] A[1]│   │p[0]│   │q[0]│
-   * │         │ x │    │ = │    │
-   * │A[2] A[3]│   │p[1]│   │q[0]│
-   * └─       ─┘   └    ┘   └    ┘
-   */
+  /// The displacement p for vid is found by solving the linear system:
+  // ┌─       ─┐   ┌    ┐   ┌    ┐
+  // │A[0] A[1]│   │p[0]│   │q[0]│
+  // │         │ x │    │ = │    │
+  // │A[2] A[3]│   │p[1]│   │q[0]│
+  // └─       ─┘   └    ┘   └    ┘
+  //
    svd_solve_2x2(A, p, q);
 
-  /* If this is a surface vertex, restrict the displacement
-   * to the surface. The new displacement is the projection
-   * of the old displacement on the surface.
-   */
+  // If this is a surface vertex, restrict the displacement
+  // to the surface. The new displacement is the projection
+  // of the old displacement on the surface.
+  //
   if(isSurfaceNode(vid)){
     p[0] -= p[0]*fabs(normals[2*vid]);
     p[1] -= p[1]*fabs(normals[2*vid+1]);
@@ -190,22 +190,22 @@ __global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
   coords[2*vid] += p[0];
   coords[2*vid+1] += p[1];
 
-  /************************************************************************
-   * At this point we must also interpolate the metric tensors from all   *
-   * neighbouring vertices in order to calculate the new value of vid's   *
-   * metric tensor at the new location. This is a quite complex procedure *
-   * and has been omitted for simplicity of the exercise. A vertex will   *
-   * always use its original metric tensor, no matter whether it has been *
-   * relocated or not.                                                    *
-   ************************************************************************/
+  /////////////////////////////////////////////////////////////////////////
+  // At this point we must also interpolate the metric tensors from all   /
+  // neighbouring vertices in order to calculate the new value of vid's   /
+  // metric tensor at the new location. This is a quite complex procedure /
+  // and has been omitted for simplicity of the exercise. A vertex will   /
+  // always use its original metric tensor, no matter whether it has been /
+  // relocated or not.                                                    /
+  /////////////////////////////////////////////////////////////////////////
 
-  /* Find the quality of the worst element after smoothing. If an element
-   * of the cavity was inverted, i.e. if vid was relocated outside the
-   * interior convex hull of the cavity, then the calculated area of that
-   * element will be negative and mesh->element_quality() will return a
-   * negative number. In such a case, the smoothing operation has to be
-   * rejected.
-   */
+  // Find the quality of the worst element after smoothing. If an element
+  // of the cavity was inverted, i.e. if vid was relocated outside the
+  // interior convex hull of the cavity, then the calculated area of that
+  // element will be negative and mesh->element_quality() will return a
+  // negative number. In such a case, the smoothing operation has to be
+  // rejected.
+  //
   double new_worst_q=1.0;
   // for(std::set<size_t>::const_iterator it=mesh->NEList[vid].begin();
       // it!=mesh->NEList[vid].end(); ++it){
@@ -221,10 +221,10 @@ __global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
   }
 
 
-  /* If quality is worse than before, either because of element inversion
-   * or just because relocating vid to the barycentre of the cavity does
-   * not improve quality, revert the changes.
-   */
+  // If quality is worse than before, either because of element inversion
+  // or just because relocating vid to the barycentre of the cavity does
+  // not improve quality, revert the changes.
+  //
   if(new_worst_q < worst_q){
     coords[2*vid] -= p[0];
     coords[2*vid+1] -= p[1];
