@@ -19,8 +19,8 @@
  * eigenvalues[0] contains the largest eigenvalue
  * eigenvalues[1] contains the smallest eigenvalue
  */
-__device__ void calc_eigenvalues(const double A[4], double eigenvalues[2]){
-  double b, discriminant;
+__device__ void calc_eigenvalues(const float A[4], float eigenvalues[2]){
+  float b, discriminant;
 
   b = A[0]+A[3];
 
@@ -34,10 +34,10 @@ __device__ void calc_eigenvalues(const double A[4], double eigenvalues[2]){
  * Calculates the eigenvectors of a 2x2 matrix A
  * given the sorted (largest to smallest) array of eigenvalues
  */
-__device__ void calc_eigenvectors(const double A[4],
-    const double eigenvalues[2], double eigenvectors[4]){
-  double D[4];
-  double proportion;
+__device__ void calc_eigenvectors(const float A[4],
+    const float eigenvalues[2], float eigenvectors[4]){
+  float D[4];
+  float proportion;
 
   /*
    * D[0] = A[0] - λ
@@ -125,7 +125,7 @@ __device__ void calc_eigenvectors(const double A[4],
 /*
  * Solves the 2D linear system Ap=q using SVD
  */
-__device__ void svd_solve_2x2(const double A[4], double p[2], const double q[2]){
+__device__ void svd_solve_2x2(const float A[4], float p[2], const float q[2]){
   /*
    * If A is decomposed as A = U * Σ * Vtransp, where:
    *
@@ -143,10 +143,10 @@ __device__ void svd_solve_2x2(const double A[4], double p[2], const double q[2])
    * Utransp: the transpose of U
    */
 
-  double AAT[4]; // This will be used to store either AAtransp or AtranspA
-  double eigenvalues[2];
-  double U[4];
-  double V[4];
+  float AAT[4]; // This will be used to store either AAtransp or AtranspA
+  float eigenvalues[2];
+  float U[4];
+  float V[4];
 
   // Caclulate AtranspA
   AAT[0] = A[0] * A[0] + A[2] * A[2];

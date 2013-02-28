@@ -7,9 +7,9 @@
 //TODO How do i use cuda standard library?
 extern "C" {
 
-__constant__ double* coords;
-__constant__ double* metric;
-__constant__ double* normals;
+__constant__ float* coords;
+__constant__ float* metric;
+__constant__ float* normals;
 // __constant__ real_t * quality;
 __constant__ size_t* ENList;
 __constant__ size_t* NNListArray;
@@ -29,39 +29,39 @@ __device__ bool isSurfaceNode(size_t vid) {
   return NE_size < NN_size;
 }
 
-__device__ double element_area(size_t eid) {
+__device__ float element_area(size_t eid) {
   const size_t *n = &ENList[3*eid];
 
   //Pointers to the coorindates of each vertex
-  const double *c0 = &coords[2*n[0]];
-  const double *c1 = &coords[2*n[1]];
-  const double *c2 = &coords[2*n[2]];
+  const float *c0 = &coords[2*n[0]];
+  const float *c1 = &coords[2*n[1]];
+  const float *c2 = &coords[2*n[2]];
 
   return orientation * 0.5 *
           ((c0[1] - c2[1]) * (c0[0] - c1[0]) -
            (c0[1] - c1[1]) * (c0[0] - c2[0]));
 }
 
-__device__ double element_quality(size_t eid) {
+__device__ float element_quality(size_t eid) {
   const size_t *n = &ENList[3*eid];
 
   // Pointers to the coordinates of each vertex
-  const double *c0 = &coords[2*n[0]];
-  const double *c1 = &coords[2*n[1]];
-  const double *c2 = &coords[2*n[2]];
+  const float *c0 = &coords[2*n[0]];
+  const float *c1 = &coords[2*n[1]];
+  const float *c2 = &coords[2*n[2]];
 
   // Pointers to the metric tensor at each vertex
-  const double *m0 = &metric[3*n[0]];
-  const double *m1 = &metric[3*n[1]];
-  const double *m2 = &metric[3*n[2]];
+  const float *m0 = &metric[3*n[0]];
+  const float *m1 = &metric[3*n[1]];
+  const float *m2 = &metric[3*n[2]];
 
   // Metric tensor averaged over the element
-  double m00 = (m0[0] + m1[0] + m2[0])/3;
-  double m01 = (m0[1] + m1[1] + m2[1])/3;
-  double m11 = (m0[2] + m1[2] + m2[2])/3;
+  float m00 = (m0[0] + m1[0] + m2[0])/3;
+  float m01 = (m0[1] + m1[1] + m2[1])/3;
+  float m11 = (m0[2] + m1[2] + m2[2])/3;
 
   // l is the length of the perimeter, measured in metric space
-  double l =
+  float l =
     sqrt((c0[1] - c1[1])*((c0[1] - c1[1])*m11 + (c0[0] - c1[0])*m01) +
          (c0[0] - c1[0])*((c0[1] - c1[1])*m01 + (c0[0] - c1[0])*m00))+
     sqrt((c0[1] - c2[1])*((c0[1] - c2[1])*m11 + (c0[0] - c2[0])*m01) +
@@ -70,17 +70,17 @@ __device__ double element_quality(size_t eid) {
          (c2[0] - c1[0])*((c2[1] - c1[1])*m01 + (c2[0] - c1[0])*m00));
 
   // Area in physical space
-  double a = element_area(eid);
+  float a = element_area(eid);
 
   // Area in metric space
-  double a_m = a*sqrt(m00*m11 - m01*m01);
+  float a_m = a*sqrt(m00*m11 - m01*m01);
 
   // Function
-  double f = min(l/3.0, 3.0/l);
-  double F = pow(f * (2.0 - f), 3.0);
+  float f = min(l/3.0, 3.0/l);
+  float F = pow(f * (2.0 - f), 3.0);
 
   // This is the 2D Lipnikov functional.
-  double quality = 12.0 * sqrt(3.0) * a_m * F / (l*l);
+  float quality = 12.0 * sqrt(3.0) * a_m * F / (l*l);
 
   return quality;
 }
@@ -99,7 +99,7 @@ __global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
   }
 
   // Find the quality of the worst element adjacent to vid
-  double worst_q=1.0;
+  float worst_q=1.0;
   // for(std::set<size_t>::const_iterator it=mesh->NEList[vid].begin();
       // it!=mesh->NEList[vid].end(); ++it){
     // worst_q = std::min(worst_q, mesh->element_quality(*it));
@@ -122,13 +122,13 @@ __global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
   // the two metric tensors of the vertices defining the edge.
 
 
-  const double * m0 = &metric[3*vid];
+  const float * m0 = &metric[3*vid];
 
-  double x0 = coords[2*vid];
-  double y0 = coords[2*vid+1];
+  float x0 = coords[2*vid];
+  float y0 = coords[2*vid+1];
 
-  double A[4] = {0.0, 0.0, 0.0, 0.0};
-  double q[2] = {0.0, 0.0};
+  float A[4] = {0.0, 0.0, 0.0, 0.0};
+  float q[2] = {0.0, 0.0};
 
   // Iterate over all edges and assemble matrices A and q.
   // for(std::vector<size_t>::const_iterator it=mesh->NNList[vid].begin();
@@ -139,15 +139,15 @@ __global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
 
       size_t il = NNListArray[nn_index];
 
-      const double *m1 = &metric[3*il];
+      const float *m1 = &metric[3*il];
 
       // Find the metric in the middle of the edge.
-      double ml00 = 0.5*(m0[0] + m1[0]);
-      double ml01 = 0.5*(m0[1] + m1[1]);
-      double ml11 = 0.5*(m0[2] + m1[2]);
+      float ml00 = 0.5*(m0[0] + m1[0]);
+      float ml01 = 0.5*(m0[1] + m1[1]);
+      float ml11 = 0.5*(m0[2] + m1[2]);
 
-      double x = coords[2*il] - x0;
-      double y = coords[2*il+1] - y0;
+      float x = coords[2*il] - x0;
+      float y = coords[2*il+1] - y0;
 
       // Calculate and accumulate the contribution of
       // this vertex to the barycentre of the cavity.
@@ -163,7 +163,7 @@ __global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
     A[2]=A[1];
 
     // Displacement vector for vid
-    double p[2];
+    float p[2];
 
   /// The displacement p for vid is found by solving the linear system:
   // ┌─       ─┐   ┌    ┐   ┌    ┐
@@ -203,7 +203,7 @@ __global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
   // negative number. In such a case, the smoothing operation has to be
   // rejected.
   //
-  double new_worst_q=1.0;
+  float new_worst_q=1.0;
   // for(std::set<size_t>::const_iterator it=mesh->NEList[vid].begin();
       // it!=mesh->NEList[vid].end(); ++it){
     // new_worst_q = std::min(new_worst_q, mesh->element_quality(*it));

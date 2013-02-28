@@ -29,19 +29,3 @@ clean:
 TARGET = ACA2-2013
 
 
-# ACA2-2013.o: ACA2-2013.cpp Mesh.hpp Smooth.hpp Color.hpp
-# 	@$(CXX) -c $(CXXFLAGS) -o ACA2-2013.o
-
-# Smooth.o: Smooth.cpp Smooth.hpp Mesh.hpp CUDATools.h
-# 	@$(CXX) -c $(CXXFLAGS) -o Smooth.o
-
-# Mesh.o: Mesh.cpp Mesh.hpp
-# 	@$(CXX) -c $(CXXFLAGS) -o Mesh.o
-
-# $(TARGET): $(OBJS)
-# 	@$(CXX) -o $(TARGET) $(OBJS) $(LIBS)
-
-# all: @$(TARGET)
-
-# clean:
-# 	@rm -f $(OBJS) $(TARGET)

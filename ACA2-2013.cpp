@@ -12,7 +12,7 @@
 #include "Smooth.hpp"
 #include "Color.hpp"
 
-double get_wtime(){
+float get_wtime(){
     struct timeval tic;
 
     long seconds, useconds;
@@ -40,9 +40,9 @@ int main(int argc, char **argv){
             << "Quality mean:  " << q.mean << std::endl
             << "Quality min:   " << q.min << std::endl;
 
-  double time = get_wtime();
+  float time = get_wtime();
   Smooth::smooth(mesh, 200, colourings);
-  double time_smooth = get_wtime() - time;
+  float time_smooth = get_wtime() - time;
 
   q = mesh->get_mesh_quality();
 

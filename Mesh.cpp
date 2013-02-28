@@ -116,7 +116,7 @@ void Mesh::find_surface(){
           std::inserter(intersection, intersection.begin()));
 
       if(intersection.size()==1){ // We have found a surface edge
-        double x=coords[2*vid], y=coords[2*vid+1];
+        float x=coords[2*vid], y=coords[2*vid+1];
 
         // Find which surface vid and *it belong to and set the corresponding
         // coordinate of the normal vector to ±1.0. The other coordinate is
@@ -165,17 +165,17 @@ void Mesh::set_orientation(){
   const size_t *n = &ENList[0];
 
   // Pointers to the coordinates of each vertex
-  const double *c0 = &coords[2*n[0]];
-  const double *c1 = &coords[2*n[1]];
-  const double *c2 = &coords[2*n[2]];
+  const float *c0 = &coords[2*n[0]];
+  const float *c1 = &coords[2*n[1]];
+  const float *c2 = &coords[2*n[2]];
 
-  double x1 = (c0[0] - c1[0]);
-  double y1 = (c0[1] - c1[1]);
+  float x1 = (c0[0] - c1[0]);
+  float y1 = (c0[1] - c1[1]);
 
-  double x2 = (c0[0] - c2[0]);
-  double y2 = (c0[1] - c2[1]);
+  float x2 = (c0[0] - c2[0]);
+  float y2 = (c0[1] - c2[1]);
 
-  double A = x1*y2 - x2*y1;
+  float A = x1*y2 - x2*y1;
 
   if(A<0)
     orientation = -1;
@@ -188,13 +188,13 @@ void Mesh::set_orientation(){
  * of two of the element's edges (e.g. AB and AC). The result is corrected by
  * the orientation factor ±1.0, so that the area is always a positive number.
  */
-double Mesh::element_area(size_t eid) const{
+float Mesh::element_area(size_t eid) const{
   const size_t *n = &ENList[3*eid];
 
   // Pointers to the coordinates of each vertex
-  const double *c0 = &coords[2*n[0]];
-  const double *c1 = &coords[2*n[1]];
-  const double *c2 = &coords[2*n[2]];
+  const float *c0 = &coords[2*n[0]];
+  const float *c1 = &coords[2*n[1]];
+  const float *c2 = &coords[2*n[2]];
 
   return orientation * 0.5 *
             ( (c0[1] - c2[1]) * (c0[0] - c1[0]) -
@@ -207,26 +207,26 @@ double Mesh::element_area(size_t eid) const{
  * for Quasioptimal Mesh Generation, Computational Mathematics and Mathematical
  * Physics, Vol. 39, No. 9, 1999, pp. 1468 - 1486.
  */
-double Mesh::element_quality(size_t eid) const{
+float Mesh::element_quality(size_t eid) const{
   const size_t *n = &ENList[3*eid];
 
   // Pointers to the coordinates of each vertex
-  const double *c0 = &coords[2*n[0]];
-  const double *c1 = &coords[2*n[1]];
-  const double *c2 = &coords[2*n[2]];
+  const float *c0 = &coords[2*n[0]];
+  const float *c1 = &coords[2*n[1]];
+  const float *c2 = &coords[2*n[2]];
 
   // Pointers to the metric tensor at each vertex
-  const double *m0 = &metric[3*n[0]];
-  const double *m1 = &metric[3*n[1]];
-  const double *m2 = &metric[3*n[2]];
+  const float *m0 = &metric[3*n[0]];
+  const float *m1 = &metric[3*n[1]];
+  const float *m2 = &metric[3*n[2]];
 
   // Metric tensor averaged over the element
-  double m00 = (m0[0] + m1[0] + m2[0])/3;
-  double m01 = (m0[1] + m1[1] + m2[1])/3;
-  double m11 = (m0[2] + m1[2] + m2[2])/3;
+  float m00 = (m0[0] + m1[0] + m2[0])/3;
+  float m01 = (m0[1] + m1[1] + m2[1])/3;
+  float m11 = (m0[2] + m1[2] + m2[2])/3;
 
   // l is the length of the perimeter, measured in metric space
-  double l =
+  float l =
     sqrt((c0[1] - c1[1])*((c0[1] - c1[1])*m11 + (c0[0] - c1[0])*m01) +
          (c0[0] - c1[0])*((c0[1] - c1[1])*m01 + (c0[0] - c1[0])*m00))+
     sqrt((c0[1] - c2[1])*((c0[1] - c2[1])*m11 + (c0[0] - c2[0])*m01) +
@@ -235,17 +235,17 @@ double Mesh::element_quality(size_t eid) const{
          (c2[0] - c1[0])*((c2[1] - c1[1])*m01 + (c2[0] - c1[0])*m00));
 
   // Area in physical space
-  double a = element_area(eid);
+  float a = element_area(eid);
 
   // Area in metric space
-  double a_m = a*sqrt(m00*m11 - m01*m01);
+  float a_m = a*sqrt(m00*m11 - m01*m01);
 
   // Function
-  double f = std::min(l/3.0, 3.0/l);
-  double F = pow(f * (2.0 - f), 3.0);
+  float f = std::min(l/3.0, 3.0/l);
+  float F = pow(f * (2.0 - f), 3.0);
 
   // This is the 2D Lipnikov functional.
-  double quality = 12.0 * sqrt(3.0) * a_m * F / (l*l);
+  float quality = 12.0 * sqrt(3.0) * a_m * F / (l*l);
 
   return quality;
 }
@@ -255,11 +255,11 @@ double Mesh::element_quality(size_t eid) const{
 Quality Mesh::get_mesh_quality() const{
   Quality q;
 
-  double mean_q = 0.0;
-  double min_q = 1.0;
+  float mean_q = 0.0;
+  float min_q = 1.0;
 
   for(size_t i=0;i<NElements;i++){
-    double ele_q = element_quality(i);
+    float ele_q = element_quality(i);
 
     mean_q += ele_q;
     min_q = std::min(min_q, ele_q);

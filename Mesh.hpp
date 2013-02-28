@@ -13,9 +13,9 @@
 #include <vector>
 
 struct Quality{
-  double mean;
-  double min;
-  double rms;
+  float mean;
+  float min;
+  float rms;
 };
 
 class Mesh{
@@ -31,12 +31,12 @@ public:
   std::vector<size_t> ENList;
 
   // Vertex vid has coordinates x=coords[2*vid] and y=coords[2*vid+1].
-  std::vector<double> coords;
+  std::vector<float> coords;
 
   // The metric tensor at vertex vid is M_00 = metric[3*vid],
   //                                    M_01 = M_10 = metric[3*vid+1] and
   //                                    M_11 = metric[3*vid+2].
-  std::vector<double> metric;
+  std::vector<float> metric;
 
   /* If vid is on the surface, the normal vector
    * (normals[2*vid],normals[2*vid+1] =
@@ -46,7 +46,7 @@ public:
    *                            = (-1.0,0.0) if vid is on the left surface
    * For all other vertices, the normal vector is (0.0,0.0).
    */
-  std::vector<double> normals;
+  std::vector<float> normals;
 
   // For every vertex i, NNList[i] contains the IDs of all adjacent vertices.
   std::vector< std::vector<size_t> > NNList;
@@ -54,8 +54,8 @@ public:
   // For every vertex i, NEList[i] contains the IDs of all adjacent elements.
   std::vector< std::set<size_t> > NEList;
 
-  double element_area(size_t eid) const;
-  double element_quality(size_t eid) const;
+  float element_area(size_t eid) const;
+  float element_quality(size_t eid) const;
   Quality get_mesh_quality() const;
 
   int orientation;
