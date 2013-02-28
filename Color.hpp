@@ -12,7 +12,7 @@ public:
     // Creates vector intialised to UINT_MAX being not colored yet
     std::vector<size_t> vertex_to_col(mesh->NNodes, UINT_MAX);
     // Colors vector holding set of vectors assuming potentially 8 colors
-    std::vector<std::vector<size_t>*> col_to_vertex;
+    std::vector<std::vector<size_t> > col_to_vertex;
 
     // For each vector loop through and work out what color
     // it can fall in
@@ -34,31 +34,26 @@ public:
         if (min_bit >= col_to_vertex.size()) {
           col_to_vertex.resize(min_bit + 1);
         }
-        if (col_to_vertex[min_bit] == NULL) {
-          col_to_vertex[min_bit] = new std::vector<size_t>();
-        }
-        col_to_vertex[min_bit]->push_back(vid);
+        col_to_vertex[min_bit].push_back(vid);
       }
     }
-
+   // return col_to_vertex;
     return reorder(mesh, col_to_vertex);
   }
 
 private:
-  static std::vector<std::vector<size_t> > reorder(Mesh* mesh, std::vector<std::vector<size_t>*>& colorings) {
+  static std::vector<std::vector<size_t> > reorder(Mesh* mesh, std::vector<std::vector<size_t> >& colorings) {
     std::vector<std::vector<size_t> > ordered_colorings(colorings.size());
     for(unsigned int color = 0; color < colorings.size(); ++color) {
       std::map<size_t, std::vector<size_t> > degrees_to_verticies;
-      std::cout << "Nodes :" << colorings[color]->size() << std::endl; 
-      for(std::vector<size_t>::const_iterator vertex = colorings[color]->begin();
-          vertex < colorings[color]->end();
-          ++vertex) {
-                degrees_to_verticies[mesh->NNList[*vertex].size()].push_back(*vertex);          
+      for(std::vector<size_t>::const_iterator vertex = colorings[color].begin();
+          vertex < colorings[color].end();
+          ++vertex) { 
+        degrees_to_verticies[mesh->NNList[*vertex].size()].push_back(*vertex);          
       }
       for(std::map<size_t, std::vector<size_t> >::const_iterator it = degrees_to_verticies.begin();
           it != degrees_to_verticies.end();
           ++it) {
-        std::cout << "Color " << color << " degree " << it->first << " size " << it->second.size() << std::endl;        
         std::vector<size_t>& nodes = ordered_colorings[color];
         nodes.insert(nodes.end(), it->second.begin(), it->second.end());
       }
