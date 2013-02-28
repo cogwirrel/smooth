@@ -16,7 +16,7 @@ __constant__ size_t* NNListArray;
 __constant__ size_t* NNListIndex;
 __constant__ size_t* NEListArray;
 __constant__ size_t* NEListIndex;
-__constant__ int* orientation;
+__constant__ int orientation;
 
 
 __device__ bool isCornerNode(size_t vid) {
@@ -37,7 +37,7 @@ __device__ double element_area(size_t eid) {
   const double *c1 = &coords[2*n[1]];
   const double *c2 = &coords[2*n[2]];
 
-  return *orientation * 0.5 *
+  return orientation * 0.5 *
           ((c0[1] - c2[1]) * (c0[0] - c1[0]) -
            (c0[1] - c1[1]) * (c0[0] - c2[0]));
 }
