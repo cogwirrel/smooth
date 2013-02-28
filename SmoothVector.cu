@@ -86,8 +86,13 @@ __device__ double element_quality(size_t eid) {
 }
 
 //TODO: WHat are the params?
-__global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
-
+__global__ void smooth() {
+  //if (coords[0] != 1.0) {
+  //   coords[100000] = 2;
+  //}
+  coords[1000000] = 20;
+  coords[0] = 50;
+  /*
   const size_t threadID = blockIdx.x * blockDim.x + threadIdx.x;
   if(threadID >= NNodesInSet)
     return;
@@ -223,7 +228,9 @@ __global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
     coords[2*vid] -= p[0];
     coords[2*vid+1] -= p[1];
   }
+*/
 }
+
 }
 
 #endif

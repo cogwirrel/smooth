@@ -20,58 +20,12 @@
 
 #include "Mesh.hpp"
 
-Mesh::Mesh(const char *filename){
-  // Check whether the provided file exists.
-  ifstream ifile(filename);
-  if(!ifile){
-    std::cerr << "File " << filename << " does not exist." << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  vtkXMLUnstructuredGridReader *reader = vtkXMLUnstructuredGridReader::New();
-  reader->SetFileName(filename);
-  reader->Update();
-
-  vtkUnstructuredGrid *ug = reader->GetOutput();
-
-  NNodes = ug->GetNumberOfPoints();
-  NElements = ug->GetNumberOfCells();
-
-  // Get the coordinates of each mesh vertex. There is no z coordinate in 2D,
-  // but VTK treats 2D and 3D meshes uniformly, so we have to provide memory
-  // for z as well (r[2] will always be zero and we ignore it).
-  for(size_t i=0;i<NNodes;i++){
-    double r[3];
-    ug->GetPoints()->GetPoint(i, r);
-    coords.push_back(r[0]);
-    coords.push_back(r[1]);
-  }
-  assert(coords.size() == 2*NNodes);
-
-  // Get the metric at each vertex.
-  for(size_t i=0;i<NNodes;i++){
-    double *tensor = ug->GetPointData()->GetArray("Metric")->GetTuple4(i);
-    metric.push_back(tensor[0]);
-    metric.push_back(tensor[1]);
-    assert(tensor[1] == tensor[2]);
-    metric.push_back(tensor[3]);
-  }
-  assert(metric.size() == 3*NNodes);
-
-  // Get the 3 vertices comprising each element.
-  for(size_t i=0;i<NElements;i++){
-    vtkCell *cell = ug->GetCell(i);
-    for(int j=0;j<3;j++){
-      ENList.push_back(cell->GetPointId(j));
-    }
-  }
-  assert(ENList.size() == 3*NElements);
-
-  reader->Delete();
-
-  create_adjacency();
-  find_surface();
-  set_orientation();
+Mesh::Mesh(){
+  NNodes = 2; 
+  coords.push_back(1);
+  coords.push_back(2);
+  coords.push_back(3);
+  coords.push_back(4);
 }
 
 void Mesh::create_adjacency(){

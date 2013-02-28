@@ -138,25 +138,7 @@ public:
     copyArrayToDevice<size_t>(NEListIndex, CUDA_NEListIndex, NNodes+1);
 
     //set the constant symbols of the smoothing-kernel, i.e. the addresses of all arrays copied above
-    CUdeviceptr address; // TODO ????
-    size_t symbol_size;
-
-    #define SET_CONSTANT(SYMBOL_NAME) \
-      cuModuleGetGlobal(&address, &symbol_size, smoothModule, #SYMBOL_NAME); \
-      cuMemcpyHtoD(address, &CUDA_ ## SYMBOL_NAME, symbol_size);
-
-    SET_CONSTANT(coords)
-    SET_CONSTANT(metric)
-    SET_CONSTANT(normals)
-    SET_CONSTANT(ENList)
-    SET_CONSTANT(NNListArray)
-    SET_CONSTANT(NNListIndex)
-    SET_CONSTANT(NEListArray)
-    SET_CONSTANT(NEListIndex)
-
-    // set element orientation in CUDA smoothing kernel
-    cuModuleGetGlobal(&CUDA_orientation, &symbol_size, smoothModule, "orientation");
-    cuMemcpyHtoD(CUDA_orientation, &mesh->orientation, symbol_size);
+    
   }
 
   void copyCoordinatesToDevice(Mesh* mesh)
@@ -182,41 +164,28 @@ public:
   void freeResources()
   {
     cuMemFree(CUDA_coords);
-    cuMemFree(CUDA_metric);
-    cuMemFree(CUDA_normals);
-    //cuMemFree(CUDA_quality);
-    cuMemFree(CUDA_ENList);
-    // cuMemFree(CUDA_coplanar_ids);
-    cuMemFree(CUDA_NNListArray);
-    cuMemFree(CUDA_NNListIndex);
-    cuMemFree(CUDA_colourArray);
-    cuMemFree(CUDA_NEListArray);
-    cuMemFree(CUDA_NEListIndex);
-    // cuMemFree(CUDA_smoothStatus);
-
-    delete[] NNListArray;
-    delete[] NNListIndex;
-    delete[] colourArray;
-    delete[] colourIndex;
-    delete[] NEListArray;
-    delete[] NEListIndex;
-
     cuCtxDestroy(cuContext);
   }
 
-  void launchSmoothingKernel(int colour)
+  void launchSmoothingKernel(Mesh* mesh)
   {
-    CUdeviceptr CUDA_ColourSetAddr = CUDA_colourArray + colourIndex[colour] * sizeof(size_t);
-    size_t NNodesInSet = colourIndex[colour+1] - colourIndex[colour];
-    threadsPerBlock = 32;
-    blocksPerGrid = (NNodesInSet + threadsPerBlock - 1) / threadsPerBlock;
+    CUdeviceptr address; // TODO ????
+    size_t symbol_size;
 
-    void * args[] = {&CUDA_ColourSetAddr, &NNodesInSet};
 
-    CUresult result = cuLaunchKernel(smoothKernel, blocksPerGrid, 1, 1, threadsPerBlock, 1, 1, 0, 0, args, NULL);
+   #define SET_CONSTANT(SYMBOL_NAME) \
+      cuModuleGetGlobal(&address, &symbol_size, smoothModule, #SYMBOL_NAME); \
+      cuMemcpyHtoD(address, &CUDA_ ## SYMBOL_NAME, symbol_size);
+
+    SET_CONSTANT(coords)
+
+    NNodes = mesh->NNodes;
+    copyArrayToDevice<double>(&mesh->coords[0], CUDA_coords, mesh->coords.size());
+    void * args[] = {};
+    CUresult result = cuLaunchKernel(smoothKernel, 1, 1, 1, 1, 1, 1, 0, 0, args, NULL);
     if(result != CUDA_SUCCESS)
     {
-      std::cout << "Error launching CUDA kernel for colour " << colour << " result "<< result << std::endl;
+      std::cout << "Error launching CUDA kernel "  << " result "<< result << std::endl;
       return;
     }
 

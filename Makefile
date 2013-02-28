@@ -9,17 +9,17 @@ vtklibs.labs = -L/usr/lib/vtk-5.8 -L/usr/lib/nvidia-current -lcuda
 vtklibs.mac = -L/usr/local/opt/vtk/lib/vtk-5.10 -L/usr/local/cuda/lib/ -lcuda
 
 CXX = g++
-CXXFLAGS = -g -O3 -Wall -Wno-deprecated ${vtkinclude.${BUILD}}
+CXXFLAGS = -c -g -O3 -Wall -Wno-deprecated ${vtkinclude.${BUILD}}
 
 OBJS = ACA2-2013.o Mesh.o Smooth.o
 
 LIBS = ${vtklibs.${BUILD}} -lvtkIO -lvtkFiltering -lvtkCommon -lvtksys -ldl -lpthread
 
-
 TARGET = ACA2-2013
 
 $(TARGET):	$(OBJS)
 	@$(CXX) -o $(TARGET) $(OBJS) $(LIBS)
+
 
 all:	@$(TARGET)
 

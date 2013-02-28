@@ -21,7 +21,7 @@ struct Quality{
 class Mesh{
 public:
   // Constructor
-  Mesh(const char *filename);
+  Mesh();
 
   size_t NNodes;    // Number of mesh vertices.
   size_t NElements; // Number of mesh elements.
