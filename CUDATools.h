@@ -113,7 +113,7 @@ public:
   }
 
   void copyMeshDataToDevice(Mesh * mesh,
-      std::vector<std::vector<size_t>*>& colour_sets,
+      std::vector<std::vector<size_t> >& colour_sets,
       size_t dimensions)
   {
     ndims = dimensions;
@@ -255,9 +255,9 @@ private:
     NNListIndex[index] = offset;
   }
 
-  void colourSetsToArray(const std::vector<std::vector<size_t>*> & colour_sets)
+  void colourSetsToArray(const std::vector<std::vector<size_t> > & colour_sets)
   {
-    std::vector<std::vector<size_t>*>::const_iterator vec_it;
+    std::vector<std::vector<size_t> >::const_iterator vec_it;
     std::vector<size_t>::const_iterator vector_it;
 
     NColours = colour_sets.size();
@@ -272,8 +272,8 @@ private:
     {
       colourIndex[colorSetIndex] = offset;
 
-      for(vector_it = (*vec_it)->begin();
-          vector_it != (*vec_it)->end();
+      for(vector_it = vec_it->begin();
+          vector_it != vec_it->end();
           vector_it++, offset++) {
         colourArray[offset] = *vector_it;
       }

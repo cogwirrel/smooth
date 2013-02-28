@@ -32,8 +32,7 @@ int main(int argc, char **argv){
 
   Mesh *mesh = new Mesh(argv[1]);
 
-  std::vector<std::vector<size_t>*> colourings = Color::color(mesh);
-
+  std::vector<std::vector<size_t> > colourings = Color::color(mesh);
   Quality q = mesh->get_mesh_quality();
 
   std::cout << "Initial quality:\n"
