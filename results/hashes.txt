@@ -1,5 +1,8 @@
 A LIST OF HASHES TO COMPARE RUNS AGAINS (new to old):
 -------------------------------------------------------------------------------------------
+f6d10163712b421744a0b9eb75e7d991b8fe440a = implemented re-ordering of colors, makes code 
+                                           WORSE :(
+-------------------------------------------------------------------------------------------
 a769fa8b912e2ada48ce256d46340c45b9a40a4c =  code migrated to GPU with floating points
 -------------------------------------------------------------------------------------------
 80d6ac00393d3c0a7981463310913cadc0b52109 = Initial CPU code
