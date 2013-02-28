@@ -27,12 +27,10 @@ void Smooth::smooth(Mesh* mesh,
        // Loop over colouring groups
       for(unsigned int ic = 0; ic < colorings.size(); ++ic) {
 
-        cudaTools.copyCoordinatesToDevice(mesh);
-        cudaTools.copyMetricToDevice(mesh);
         cudaTools.launchSmoothingKernel(ic);
-        cudaTools.copyCoordinatesFromDevice(mesh);
-        cudaTools.copyMetricFromDevice(mesh);
       }
     }
+    cudaTools.copyCoordinatesFromDevice(mesh);
+    cudaTools.freeResources();
   }
 }
