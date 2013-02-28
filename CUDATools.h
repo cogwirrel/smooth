@@ -114,10 +114,12 @@ public:
 
   void copyMeshDataToDevice(Mesh * mesh,
       std::vector<std::vector<size_t> >& colour_sets,
+      size_t num_colored_nodes,
       size_t dimensions)
   {
     ndims = dimensions;
     nloc = ndims+1;
+    NColoredNodes = num_colored_nodes;
     NNodes = mesh->NNodes;
     NElements = mesh->NElements;
 
@@ -263,7 +265,7 @@ private:
     NColours = colour_sets.size();
 
     colourIndex = new size_t[NColours+1];
-    colourArray = new size_t[NNodes];
+    colourArray = new size_t[NColoredNodes];
 
     size_t offset = 0;
 
@@ -350,7 +352,7 @@ private:
 
   unsigned int threadsPerBlock, blocksPerGrid;
 
-  size_t NNodes, NElements, NSElements, ndims, nloc;
+  size_t NNodes, NColoredNodes, NElements, NSElements, ndims, nloc;
 
   CUdeviceptr CUDA_coords;
   CUdeviceptr CUDA_metric;

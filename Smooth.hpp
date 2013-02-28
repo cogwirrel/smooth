@@ -15,6 +15,7 @@ class Smooth{
   public:
     static void smooth(Mesh *mesh,
                 size_t niter,
+                size_t num_colored_nodes,
                 std::vector<std::vector<size_t> >& colorings);
 };
 

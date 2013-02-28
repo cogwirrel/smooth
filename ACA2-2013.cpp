@@ -25,6 +25,14 @@ double get_wtime(){
     return seconds + useconds*1e-06;
 }
 
+size_t get_colored_node_count(std::vector<std::vector<size_t> >& colorings) {
+  size_t count = 0;
+  for(size_t i = 0; i < colorings.size(); i++) {
+    count += colorings[i].size();
+  }
+  return count;
+}
+
 int main(int argc, char **argv){
   if(argc!=2){
     std::cerr << "Usage: " << argv[0] << " mesh_file" << std::endl;
@@ -32,7 +40,9 @@ int main(int argc, char **argv){
 
   Mesh *mesh = new Mesh(argv[1]);
 
-  std::vector<std::vector<size_t> > colourings = Color::color(mesh);
+  std::vector<std::vector<size_t> > colorings = Color::color(mesh);
+  size_t num_colored_nodes = get_colored_node_count(colorings);
+
   Quality q = mesh->get_mesh_quality();
 
   std::cout << "Initial quality:\n"
@@ -40,7 +50,7 @@ int main(int argc, char **argv){
             << "Quality min:   " << q.min << std::endl;
 
   double time = get_wtime();
-  Smooth::smooth(mesh, 200, colourings);
+  Smooth::smooth(mesh, 200, num_colored_nodes, colorings);
   double time_smooth = get_wtime() - time;
 
   q = mesh->get_mesh_quality();

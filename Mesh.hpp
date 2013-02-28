@@ -54,6 +54,8 @@ public:
   // For every vertex i, NEList[i] contains the IDs of all adjacent elements.
   std::vector< std::set<size_t> > NEList;
 
+  bool isCornerNode(size_t vid) const;
+
   float element_area(size_t eid) const;
   float element_quality(size_t eid) const;
   Quality get_mesh_quality() const;

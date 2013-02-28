@@ -17,6 +17,9 @@ public:
     // For each vector loop through and work out what color
     // it can fall in
     for(size_t vid=0; vid < mesh->NNodes; ++vid){
+      if(mesh->isCornerNode(vid)) {
+        continue;
+      }
       // Loop over connecting verticies.
       unsigned int colors = UINT_MAX;
       for(std::vector<size_t>::const_iterator it=mesh->NNList[vid].begin();
