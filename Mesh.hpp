@@ -31,7 +31,7 @@ public:
   std::vector<size_t> ENList;
 
   // Vertex vid has coordinates x=coords[2*vid] and y=coords[2*vid+1].
-  std::vector<double> coords;
+  std::vector<float> coords;
 
   // The metric tensor at vertex vid is M_00 = metric[3*vid],
   //                                    M_01 = M_10 = metric[3*vid+1] and
@@ -54,16 +54,6 @@ public:
   // For every vertex i, NEList[i] contains the IDs of all adjacent elements.
   std::vector< std::set<size_t> > NEList;
 
-  double element_area(size_t eid) const;
-  double element_quality(size_t eid) const;
-  Quality get_mesh_quality() const;
-
-  int orientation;
-
-private:
-  void create_adjacency();
-  void find_surface();
-  void set_orientation();
 };
 
 #endif /* MESH_HPP_ */

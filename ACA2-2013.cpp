@@ -15,7 +15,7 @@ int main(int argc, char **argv){
   Mesh *mesh = new Mesh();
 
   Smooth::smooth(mesh);
-  
+  std::cout << mesh->coords[0] << std::endl;  
   delete mesh;
 
   return EXIT_SUCCESS;

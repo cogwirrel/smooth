@@ -7,8 +7,8 @@
 //TODO How do i use cuda standard library?
 extern "C" {
 
-__constant__ double* coords;
-__constant__ double* metric;
+__constant__ float* coords;
+/*__constant__ double* metric;
 __constant__ double* normals;
 // __constant__ real_t * quality;
 __constant__ size_t* ENList;
@@ -84,14 +84,14 @@ __device__ double element_quality(size_t eid) {
 
   return quality;
 }
-
+*/
 //TODO: WHat are the params?
 __global__ void smooth() {
   //if (coords[0] != 1.0) {
   //   coords[100000] = 2;
   //}
-  coords[1000000] = 20;
-  coords[0] = 50;
+  //coords[1000000] = 20;
+  coords[0] = 5.0;
   /*
   const size_t threadID = blockIdx.x * blockDim.x + threadIdx.x;
   if(threadID >= NNodesInSet)

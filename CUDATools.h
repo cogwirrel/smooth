@@ -127,15 +127,6 @@ public:
     NEListToArray(mesh->NEList);
 
     // and copy everything to the device
-    copyArrayToDevice<double>(&mesh->coords[0], CUDA_coords, NNodes * ndims);
-    copyArrayToDevice<double>(&mesh->metric[0], CUDA_metric, NNodes * nloc); //TODO is thhis right?
-    copyArrayToDevice<double>(&mesh->normals[0], CUDA_normals, NNodes * ndims);
-    copyArrayToDevice<size_t>(&mesh->ENList[0], CUDA_ENList, NElements * nloc);
-    copyArrayToDevice<size_t>(NNListArray, CUDA_NNListArray, NNListArray_size);
-    copyArrayToDevice<size_t>(NNListIndex, CUDA_NNListIndex, NNodes+1);
-    copyArrayToDevice<size_t>(colourArray, CUDA_colourArray, NNodes);
-    copyArrayToDevice<size_t>(NEListArray, CUDA_NEListArray, NEListArray_size);
-    copyArrayToDevice<size_t>(NEListIndex, CUDA_NEListIndex, NNodes+1);
 
     //set the constant symbols of the smoothing-kernel, i.e. the addresses of all arrays copied above
     
@@ -143,7 +134,7 @@ public:
 
   void copyCoordinatesToDevice(Mesh* mesh)
   {
-    copyArrayToDeviceNoAlloc<double>(&mesh->coords[0], CUDA_coords, NNodes * ndims);
+    copyArrayToDeviceNoAlloc<float>(&mesh->coords[0], CUDA_coords, NNodes * ndims);
   }
 
   void copyMetricToDevice(Mesh* mesh)
@@ -153,7 +144,7 @@ public:
 
   void copyCoordinatesFromDevice(Mesh* mesh)
   {
-    copyArrayFromDevice<double>(&mesh->coords[0], CUDA_coords, NNodes * ndims);
+    copyArrayFromDevice<float>(&mesh->coords[0], CUDA_coords, NNodes * 2);
   }
 
   void copyMetricFromDevice(Mesh* mesh)
@@ -171,7 +162,8 @@ public:
   {
     CUdeviceptr address; // TODO ????
     size_t symbol_size;
-
+    copyArrayToDevice<float>(&mesh->coords[0], CUDA_coords, mesh->coords.size());
+ 
 
    #define SET_CONSTANT(SYMBOL_NAME) \
       cuModuleGetGlobal(&address, &symbol_size, smoothModule, #SYMBOL_NAME); \
@@ -180,9 +172,7 @@ public:
     SET_CONSTANT(coords)
 
     NNodes = mesh->NNodes;
-    copyArrayToDevice<double>(&mesh->coords[0], CUDA_coords, mesh->coords.size());
-    void * args[] = {};
-    CUresult result = cuLaunchKernel(smoothKernel, 1, 1, 1, 1, 1, 1, 0, 0, args, NULL);
+    CUresult result = cuLaunchKernel(smoothKernel, 1, 1, 1, 1, 1, 1, 0, 0, NULL, NULL);
     if(result != CUDA_SUCCESS)
     {
       std::cout << "Error launching CUDA kernel "  << " result "<< result << std::endl;
