@@ -1,0 +1,21 @@
+A LIST OF HASHES TO COMPARE RUNS AGAINS (new to old):
+-------------------------------------------------------------------------------------------
+a769fa8b912e2ada48ce256d46340c45b9a40a4c =  code migrated to GPU with floating points
+-------------------------------------------------------------------------------------------
+80d6ac00393d3c0a7981463310913cadc0b52109 = Initial CPU code
+
+Note if you want to run it on labs change the makefile to this:
+CXXFLAGS = -O3 -Wall -Wno-deprecated -I/usr/include/vtk-5.8 -I./ 
+OBJS = ACA2-2013.o Mesh.o Smooth.o SVD2x2.o
+
+LIBS =  -L/usr/lib/vtk-5.8 -lvtkIO -lvtkFiltering -lvtkCommon -lvtksys -ldl -lpthread
+TARGET = ACA2-2013
+
+$(TARGET):  $(OBJS)
+  @$(CXX) -o $(TARGET) $(OBJS) $(LIBS)
+
+all:  @$(TARGET)
+
+clean:
+  @rm -f $(OBJS) $(TARGET)
+-----------------------------------------------------------------------------------------------
