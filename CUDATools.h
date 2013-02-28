@@ -99,7 +99,7 @@ public:
       //TODO: modify makefile to load this
       if(cuModuleLoad(&smoothModule, "SmoothVector.cubin") != CUDA_SUCCESS)
       {
-        std::cout << "Error loading CUDA cubin module \"Smooth\"" << std::endl;
+        std::cout << "Error loading CUDA module \"Smooth\"" << std::endl;
         return;
       }
 
@@ -176,7 +176,7 @@ public:
 
   void copyMetricFromDevice(Mesh* mesh)
   {
-    copyArrayFromDevice<double>((double *) &mesh->metric[0], CUDA_metric, NNodes * ndims * ndims);
+    copyArrayFromDevice<double>(&mesh->metric[0], CUDA_metric, NNodes * nloc);
   }
 
   void freeResources()
