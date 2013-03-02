@@ -40,7 +40,7 @@ int main(int argc, char **argv){
 
   Mesh *mesh = new Mesh(argv[1]);
 
-  std::vector<std::vector<size_t> > colorings = Color::color(mesh);
+  std::vector<std::vector<size_t> > colorings = Color::color(mesh, false);
   size_t num_colored_nodes = get_colored_node_count(colorings);
 
   Quality q = mesh->get_mesh_quality();

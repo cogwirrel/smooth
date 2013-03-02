@@ -19,10 +19,6 @@ __constant__ size_t* NEListIndex;
 __constant__ int orientation;
 
 
-__device__ bool isCornerNode(size_t vid) {
-  return fabs(normals[2*vid])==1.0 && fabs(normals[2*vid+1])==1.0;
-}
-
 __device__ bool isSurfaceNode(size_t vid) {
   int NE_size = NEListIndex[vid + 1] - NEListIndex[vid];
   int NN_size = NNListIndex[vid + 1] - NNListIndex[vid];
@@ -93,10 +89,6 @@ __global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
     return;
 
   size_t vid = colourSet[threadID];
-
-  if (isCornerNode(vid)) {
-    return;
-  }
 
   // Find the quality of the worst element adjacent to vid
   float worst_q=1.0;

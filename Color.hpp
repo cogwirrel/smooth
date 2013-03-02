@@ -9,7 +9,6 @@
 class Color {
 public:
   static std::vector<std::vector<size_t> > color(Mesh* mesh, 
-    bool discard_corners=false,
     bool rearrange_colors=false) {
     // Creates vector intialised to UINT_MAX being not colored yet
     std::vector<size_t> vertex_to_col(mesh->NNodes, UINT_MAX);
@@ -19,7 +18,7 @@ public:
     // For each vector loop through and work out what color
     // it can fall in
     for(size_t vid=0; vid < mesh->NNodes; ++vid){
-      if(mesh->isCornerNode(vid) && discard_corners) {
+      if(mesh->isCornerNode(vid)) {
         continue;
       }
       // Loop over connecting verticies.
