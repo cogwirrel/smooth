@@ -1,5 +1,6 @@
 *.vtu
 *.o
+*.dat
+db/experiments.db
 ACA2-2013
 *.cubin
-*.dat 
