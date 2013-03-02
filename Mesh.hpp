@@ -22,16 +22,6 @@ public:
   std::vector<size_t> _a;
   size_t* _a_pinned;
 
-  std::vector<float> _b;
-  float* _b_pinned;
-  
-  std::vector<float> _c;
-  float* _c_pinned;
-
-  std::vector<float> _d;
-  float* _d_pinned;
-
-
 private:
   void cuda_check(cudaError_t success);
 };
