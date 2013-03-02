@@ -3,6 +3,27 @@ smooth
 
 Architecture Assessed Coursework 2
 
+Database
+========
+* Create database:
+  <code>
+    cd db/
+    sqlite3 expirements.db < build-tables.sql
+  </code>
+ (NOTE: database filename is hardcoded in .py files)
+* Create experiment:
+ <code>
+   ./create-experiment.py C78DAB description about this experiment does
+ </code>
+ This will also print the experiment ID to output
+
+* Add results for a run:
+ <code>
+   ./add-data.py 44 file-containing-stdout file-containing-stderr
+ </code>
+ Note 44 here is the experiment id returned from create
+
+
 Profiling
 ========
 Unfortunately lab machines only have CUDA compute capability = 1.1 so many of
