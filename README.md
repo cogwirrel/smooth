@@ -12,10 +12,9 @@ so we must make use of this.
 
 In order to start profiling code
 * ``source profile.sh`` - this will export the relevant shell variables
-* Modify config.txt to contain any counters etc, you wish. Beware only a few
+* Modify ``config.txt`` to contain any counters etc, you wish. Beware only a few
   counters should be added
-  For a full list of counters see [this config
-  file]: https://svn.ece.lsu.edu/svn/gp/cuda/stream/.cuda-profile-config
+  For a full list of counters see https://svn.ece.lsu.edu/svn/gp/cuda/stream/.cuda-profile-config
 * Run code normally
 * Find results in ``profile.dat``
 * Parse with ``python python/profile_parser.py profile.dat`` to see useful
