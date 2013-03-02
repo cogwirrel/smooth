@@ -14,7 +14,7 @@
 
 #include "Mesh.hpp"
 
-Mesh::Mesh(const char *filename){
+Mesh::Mesh(){
   for(size_t i = 0; i < 10; i++){
     _a.push_back(i);
     _b.push_back(i);

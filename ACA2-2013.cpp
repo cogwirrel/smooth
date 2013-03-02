@@ -13,7 +13,7 @@
 
 int main(int argc, char **argv){
 
-  Mesh *mesh = new Mesh(argv[1]);
+  Mesh *mesh = new Mesh();
   mesh->pin_data();
   
   delete mesh;

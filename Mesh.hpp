@@ -15,7 +15,7 @@
 
 class Mesh{
 public:
-  Mesh(const char *filename);
+  Mesh();
   ~Mesh();  
   void pin_data();
 
