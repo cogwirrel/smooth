@@ -8,7 +8,9 @@
 
 class Color {
 public:
-  static std::vector<std::vector<size_t> > color(Mesh* mesh, bool discard_corners=true) {
+  static std::vector<std::vector<size_t> > color(Mesh* mesh, 
+    bool discard_corners=false,
+    bool rearrange_colors=false) {
     // Creates vector intialised to UINT_MAX being not colored yet
     std::vector<size_t> vertex_to_col(mesh->NNodes, UINT_MAX);
     // Colors vector holding set of vectors assuming potentially 8 colors
@@ -40,8 +42,8 @@ public:
         col_to_vertex[min_bit].push_back(vid);
       }
     }
-   // return col_to_vertex;
-    return reorder(mesh, col_to_vertex);
+    return rearrange_colors ? reorder(mesh, col_to_vertex) :
+                              col_to_vertex;
   }
 
 private:
