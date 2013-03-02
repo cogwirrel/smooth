@@ -94,6 +94,10 @@ __global__ void smooth(const size_t* colourSet, const size_t NNodesInSet) {
 
   size_t vid = colourSet[threadID];
 
+  if (isCornerNode(vid)) {
+    return;
+  }
+
   // Find the quality of the worst element adjacent to vid
   float worst_q=1.0;
   // for(std::set<size_t>::const_iterator it=mesh->NEList[vid].begin();
