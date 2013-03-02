@@ -7,7 +7,7 @@ from sys import stderr
 MAX_SIZE = 300000 # ~300 KB - more than enough!
 
 # Name of database file
-DB_FILE = 'example.db'
+DB_FILE = 'experiments.db'
 
 # Parse arguments
 parser = argparse.ArgumentParser(description='Adds a data point to the database. If successful, writes the data id to stdout.')

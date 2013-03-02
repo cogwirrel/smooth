@@ -3,7 +3,7 @@ import sqlite3
 import argparse
 
 # Name of database file
-DB_FILE = 'example.db'
+DB_FILE = 'experiments.db'
 
 # Parse arguments
 parser = argparse.ArgumentParser(description='Create an experiment in the database. If successful, writes the experiment id to stdout.')

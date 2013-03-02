@@ -1,7 +1,7 @@
 -- USAGE: In order to create the database run the following command.
 --        Note that this does not work if a file already exists.
 --
---        sqlite3 example.db < build-tables.sql
+--        sqlite3 experiments.db < build-tables.sql
 CREATE TABLE experiment (
      experimentid INTEGER PRIMARY KEY,
      sha CHARACTER(40),
