@@ -18,6 +18,9 @@
 #include <vtkUnstructuredGrid.h>
 #include <vtkXMLUnstructuredGridReader.h>
 
+#include <cuda.h>
+#include <cuda_runtime.h>
+
 #include "Mesh.hpp"
 
 Mesh::Mesh(const char *filename){
@@ -72,6 +75,101 @@ Mesh::Mesh(const char *filename){
   create_adjacency();
   find_surface();
   set_orientation();
+}
+
+Mesh::~Mesh() {
+  cudaFreeHost(coords_pinned);
+  cudaFreeHost(ENList_pinned);
+  cudaFreeHost(metric_pinned);
+  cudaFreeHost(normals_pinned);
+  cudaFreeHost(NNListArray_pinned);
+  cudaFreeHost(NNListIndex_pinned);
+  cudaFreeHost(NEListArray_pinned);
+  cudaFreeHost(NEListIndex_pinned);
+}
+
+void Mesh::pin_data() {
+  std::cout<< "1" << std::endl;
+  NNListToArray();
+  std::cout << "2" << std::endl;
+  NEListToArray();
+
+  size_t ENList_bytes = sizeof(size_t) * ENList.size();
+  size_t coords_bytes = sizeof(float) * coords.size();
+  size_t metric_bytes = sizeof(float) * metric.size();
+  size_t normal_bytes = sizeof(float) * normals.size();
+  std::cout << "A" << std::endl;
+  cuda_check(cudaMallocHost((void **)ENList_pinned, ENList_bytes));
+  std::cout << "B" << std::endl;
+  cuda_check(cudaMallocHost((void **)coords_pinned, coords_bytes));
+  cuda_check(cudaMallocHost((void **)metric_pinned, metric_bytes));
+  std::cout << "C" << std::endl;
+  cuda_check(cudaMallocHost((void **)normals_pinned, normal_bytes));
+  std::cout << "D" << std::endl;
+  memcpy(ENList_pinned, &ENList[0], ENList_bytes);
+  memcpy(coords_pinned, &coords[0], coords_bytes);
+  memcpy(metric_pinned, &metric[0], metric_bytes);
+  memcpy(normals_pinned, &normals[0], normal_bytes);
+}
+
+void Mesh::cuda_check(cudaError_t status) {
+  if (status != cudaSuccess) {
+    std::cout << "Error could not allocate memory result " << status << std::endl;
+    exit(1);
+  }
+}
+
+void Mesh::NNListToArray() {
+    std::vector< std::vector<size_t> >::const_iterator vec_it;
+    std::vector<size_t>::const_iterator vector_it;
+    size_t offset = 0;
+    size_t index = 0;
+
+    for(vec_it = NNList.begin(); vec_it != NNList.end(); vec_it++)
+      offset += vec_it->size();
+
+    std::cout << "Need " << sizeof(size_t)*(NNodes+1) << std::endl;
+    cuda_check(cudaMallocHost((void **)NNListIndex_pinned, sizeof(size_t) * (NNodes+1)));
+    cuda_check(cudaMallocHost((void **)NNListArray_pinned, sizeof(size_t) * offset));
+
+    offset = 0;
+
+    for(vec_it = NNList.begin(); vec_it != NNList.end(); vec_it++)
+    {
+      NNListIndex_pinned[index++] = offset;
+
+      for(vector_it = vec_it->begin(); vector_it != vec_it->end(); vector_it++)
+        NNListArray_pinned[offset++] = *vector_it;
+    }
+
+    assert(index == NNList.size());
+    NNListIndex_pinned[index] = offset;
+}
+
+void Mesh::NEListToArray() {
+    std::vector< std::set<size_t> >::const_iterator vec_it;
+    std::set<size_t>::const_iterator set_it;
+    size_t offset = 0;
+    size_t index = 0;
+
+    for(vec_it = NEList.begin(); vec_it != NEList.end(); vec_it++)
+      offset += vec_it->size();
+
+    cuda_check(cudaMallocHost((void **)NEListIndex_pinned, sizeof(size_t) * (NNodes+1)));
+    cuda_check(cudaMallocHost((void **)NEListArray_pinned, sizeof(size_t) * offset));
+
+    offset = 0;
+
+    for(vec_it = NEList.begin(); vec_it != NEList.end(); vec_it++)
+    {
+      NEListIndex_pinned[index++] = offset;
+
+      for(set_it = vec_it->begin(); set_it != vec_it->end(); set_it++)
+        NEListArray_pinned[offset++] = *set_it;
+    }
+
+    assert(index == NEList.size());
+    NEListIndex_pinned[index] = offset;
 }
 
 void Mesh::create_adjacency(){

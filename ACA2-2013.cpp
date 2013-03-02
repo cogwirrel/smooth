@@ -39,6 +39,7 @@ int main(int argc, char **argv){
   }
 
   Mesh *mesh = new Mesh(argv[1]);
+  mesh->pin_data();
 
   std::vector<std::vector<size_t> > colorings = Color::color(mesh, false);
   size_t num_colored_nodes = get_colored_node_count(colorings);

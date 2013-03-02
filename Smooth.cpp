@@ -20,6 +20,8 @@ void Smooth::smooth(Mesh* mesh,
 
   cudaTools.initialize();
 
+
+  mesh->pin_data();
   if(cudaTools.isEnabled()) {
     cudaTools.copyMeshDataToDevice(mesh, colorings, num_colored_nodes, 2); // TODO do we need a quality? (NULL for now)
    // For the specified number of iterations, loop over all mesh vertices.
