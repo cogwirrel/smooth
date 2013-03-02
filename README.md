@@ -6,10 +6,12 @@ Architecture Assessed Coursework 2
 Database
 ========
 * Create database:
-  <code>
+
+  <pre><code>
     cd db/
+    
     sqlite3 expirements.db < build-tables.sql
-  </code>
+  </code></pre>
  (NOTE: database filename is hardcoded in .py files)
 * Create experiment:
  <code>
