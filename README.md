@@ -10,7 +10,7 @@ Database
   <pre><code>
     cd db/
     
-    sqlite3 expirements.db < build-tables.sql
+    sqlite3 expirements.db &lt; build-tables.sql
   </code></pre>
  (NOTE: database filename is hardcoded in .py files)
 * Create experiment:
