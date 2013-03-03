@@ -38,5 +38,10 @@ def fileToString(filename):
 with sqlite3.connect(DB_FILE) as conn:
 	# enable foreign key enforcement...
 	conn.execute('PRAGMA foreign_keys = ON;')
-	cur = conn.execute('insert into data (experimentid, stdout, stderr) values (?,?,?)', (args.exp_id, stdout_txt, stderr_txt))
+	try:
+		cur = conn.execute('insert into data (experimentid, stdout, stderr) values (?,?,?)', (args.exp_id, stdout_txt, stderr_txt))
+	except sqlite3.IntegrityError:
+		print >> stderr, "Experiment %d non-existant" %args.exp_id
+		exit(1)
+
 	print cur.lastrowid
