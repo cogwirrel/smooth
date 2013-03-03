@@ -205,7 +205,7 @@ public:
   {
     CUdeviceptr CUDA_ColourSetAddr = CUDA_colourArray + colourIndex[colour] * sizeof(size_t);
     size_t NNodesInSet = colourIndex[colour+1] - colourIndex[colour];
-    threadsPerBlock = 32;
+    threadsPerBlock = 128;
     blocksPerGrid = (NNodesInSet + threadsPerBlock - 1) / threadsPerBlock;
 
     void * args[] = {&CUDA_ColourSetAddr, &NNodesInSet};
