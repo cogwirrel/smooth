@@ -5,6 +5,7 @@ from paramiko import SSHException
 import argparse
 from getpass import getpass
 from os import _exit
+from pipes import quote
 from shutil import copyfileobj
 from socket import timeout as TimeoutException
 from sys import stdin, stdout, stderr
@@ -39,6 +40,8 @@ parser.add_argument('--username', metavar='USERNAME', type=str,
                     help='Username to connect as.')
 parser.add_argument('--no-password', action='store_false',
                     default=True, help="Don't ask for password / SSH key passphrase")
+parser.add_argument('--path', metavar='PATH',
+                    help="Set remote current directory.")
 args = parser.parse_args()
 
 
@@ -64,7 +67,11 @@ try:
 	try:
 		# Setup communication and send command
 		bufsize = -1
-		command = ' '.join(args.cmd)
+
+		args.path = quote(args.path)
+		command = 'cd ' + args.path + ' && ' if args.path else ''
+		command += ' '.join(args.cmd)
+
 		chan = client.get_transport().open_session()
 		chan.settimeout(TIMEOUT)
 		chan.exec_command(command)
