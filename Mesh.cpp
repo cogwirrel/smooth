@@ -20,14 +20,14 @@ Mesh::Mesh(){
   }
 }
 
-Mesh::~Mesh() {
+Mesh::~Mesh() {  
   cudaFreeHost(_a_pinned);
 }
 
 void Mesh::pin_data() {
   size_t _a_bytes = sizeof(size_t) * _a.size();
   
-  cuda_check(cudaMallocHost((void **)_a_pinned, _a_bytes));
+  cuda_check(cudaMallocHost((void **)&_a_pinned, _a_bytes));
   memcpy(_a_pinned, &_a[0], _a_bytes);
 }
 
