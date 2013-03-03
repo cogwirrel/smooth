@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 if [[ $# -le 1 ]] ; then
  {
@@ -16,20 +16,15 @@ fi
 # Experiment ID
 EXPID="$1"
 
-# Local path to save output files
-OUTPUTDIR='output-files/'
+# Source DB variables
+source db.config
+
+# Check variables are set
+echo ${OUTPUTDIR?} ${DBSERVER?} ${DBPATH?} ${LOGFILE?} > /dev/null
 
 # Create directory if non-existant
 mkdir -p "$OUTPUTDIR"
 
-# Name of machine acting as DB server
-DBSERVER='visual20'
-
-# Path to DB folder on DB server
-DBPATH='/homes/wa910/smooth-shared/'
-
-# Log file in case of error
-LOGFILE='experiment.log'
 
 # Get SSH keys
 NOPASS='--no-password'
@@ -38,7 +33,7 @@ case "$?" in
   # Successful
   0) echo "Using detected SSH authentication agent" >&2 ;;
   # No keys added, prompt to add. If that fails, enable password prompt.
-  1) ssh-add || { unset NOPASS ; echo "Failed to add keys." >&2 ; } ;;
+  1) ssh-add || { NOPASS=" " ; echo "Failed to add keys." >&2 ; } ;;
   # No ssh authentication agent. Re-run script under agent (recursive call)
   2) echo "Starting SSH agent" >&2 ; exec ssh-agent ./"$0" "$@" ;;
 esac
@@ -55,7 +50,6 @@ trap "echo `date +%x-%X`: \
 # Run command and write output to file
 shift  # discard experiment ID
 bash -c "$@" > >(tee "$STDOUT") 2> >(tee "$STDERR" >&2)
-
 
 # (Optional) copy output files
 scp "$STDOUT" "$STDERR" "${DBSERVER}:${DBPATH}"
