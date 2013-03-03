@@ -1,0 +1,24 @@
+Initial quality:
+Quality mean:  0.865981
+Quality min:   0.333771
+After smoothing:
+Quality mean:  0.916009
+Quality min:   0.575187
+Test passed
+BENCHMARK: 14.819s
+Initial quality:
+Quality mean:  0.865981
+Quality min:   0.333771
+After smoothing:
+Quality mean:  0.916009
+Quality min:   0.575187
+Test passed
+BENCHMARK: 15.1976s
+Initial quality:
+Quality mean:  0.865981
+Quality min:   0.333771
+After smoothing:
+Quality mean:  0.916009
+Quality min:   0.575187
+Test passed
+BENCHMARK: 14.9454s
