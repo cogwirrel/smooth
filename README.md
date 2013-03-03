@@ -42,4 +42,6 @@ In order to start profiling code
 * Find results in ``profile.dat``
 * Parse with ``python python/profile_parser.py profile.dat`` to see useful
   results.
+* Parse with ``python python/profile_parser.py --latex profile.dat`` for tabulated results.
 * To turn profiling off ``source profile_off.sh``
+
