@@ -1,8 +1,15 @@
 #!/bin/bash
 
 if [[ $# -le 1 ]] ; then
-  echo "USAGE: `basename "$0"` EXPERIMENT-ID COMMAND..."
+ {
+  echo -e "\nUSAGE: `basename "$0"` EXPERIMENT-ID COMMAND...\n"
+  echo "For convenience, run the following beforehand in order to"\
+       "load your SSH keys:"
+  echo -e "\n  exec ssh-agent <YOURSHELLNAME>\
+           \n  ssh-add\n"
+  echo "Where <YOURSHELLNAME> is 'bash', 'zsh', etc."
   exit 2
+ } >&2
 fi
 
 
