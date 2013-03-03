@@ -103,9 +103,9 @@ void Mesh::pin_data() {
 
   // Point our pointers to correct position in contiguous memory
   ENList_pinned = (size_t*)pinned_data;
-  coords_pinned = (float*)(ENList_pinned + ENList_bytes);
-  metric_pinned = (float*)(coords_pinned + coords_bytes);
-  normals_pinned = (float*)(metric_pinned + metric_bytes);
+  coords_pinned = (float*)(ENList_pinned + ENList.size());
+  metric_pinned = (float*)(coords_pinned + coords.size());
+  normals_pinned = (float*)(metric_pinned + metric.size());
 
   memcpy(ENList_pinned, &ENList[0], ENList_bytes);
   memcpy(coords_pinned, &coords[0], coords_bytes);
