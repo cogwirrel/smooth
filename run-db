@@ -26,7 +26,7 @@ mkdir -p "$OUTPUTDIR"
 DBSERVER='visual20'
 
 # Path to DB folder on DB server
-DBPATH='/homes/wa910/Documents/architecture/smooth/db/'
+DBPATH='/homes/wa910/smooth-shared/'
 
 # Log file in case of error
 LOGFILE='experiment.log'
