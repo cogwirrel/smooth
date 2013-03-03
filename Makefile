@@ -13,9 +13,9 @@ CXX = nvcc
 CXXFLAGS = -c -O3 ${vtkinclude.${BUILD}}
 
 
-OBJS = ACA2-2013.o Mesh.o Smooth.o
+OBJS = ACA2-2013.o Mesh.o
 
-INCS = CUDATools.h Color.hpp
+INCS = CUDATools.h Smooth.hpp Color.hpp
 
 LIBS = ${vtklibs.${BUILD}} -lvtkIO -lvtkFiltering -lvtkCommon -lvtksys -ldl -lpthread
 
@@ -41,8 +41,8 @@ clean:
 Mesh.o: $(INCS) Mesh.cpp Mesh.hpp
 	$(CXX) $(CXXFLAGS) Mesh.cpp -o Mesh.o
 
-Smooth.o: $(INCS) Smooth.cpp Smooth.hpp
-	$(CXX) $(CXXFLAGS) Smooth.cpp -o Smooth.o
+#Smooth.o: $(INCS) Smooth.cpp Smooth.hpp
+#	$(CXX) $(CXXFLAGS) Smooth.cpp -o Smooth.o
 
 ACA2-2013.o: $(INCS) ACA2-2013.cpp
 	$(CXX) $(CXXFLAGS) ACA2-2013.cpp -o ACA2-2013.o

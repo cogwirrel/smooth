@@ -60,11 +60,13 @@ public:
   std::vector< std::vector<size_t> > NNList;
   size_t* NNListArray_pinned;
   size_t* NNListIndex_pinned;
+  size_t NNListArray_size;
 
   // For every vertex i, NEList[i] contains the IDs of all adjacent elements.
   std::vector< std::set<size_t> > NEList;
   size_t* NEListArray_pinned;
   size_t* NEListIndex_pinned;
+  size_t NEListArray_size;
 
   bool isCornerNode(size_t vid) const;
 

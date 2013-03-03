@@ -89,23 +89,19 @@ Mesh::~Mesh() {
 }
 
 void Mesh::pin_data() {
-  std::cout<< "1" << std::endl;
   NNListToArray();
-  std::cout << "2" << std::endl;
   NEListToArray();
 
   size_t ENList_bytes = sizeof(size_t) * ENList.size();
   size_t coords_bytes = sizeof(float) * coords.size();
   size_t metric_bytes = sizeof(float) * metric.size();
   size_t normal_bytes = sizeof(float) * normals.size();
-  std::cout << "A" << std::endl;
-  cuda_check(cudaMallocHost((void **)ENList_pinned, ENList_bytes));
-  std::cout << "B" << std::endl;
-  cuda_check(cudaMallocHost((void **)coords_pinned, coords_bytes));
-  cuda_check(cudaMallocHost((void **)metric_pinned, metric_bytes));
-  std::cout << "C" << std::endl;
-  cuda_check(cudaMallocHost((void **)normals_pinned, normal_bytes));
-  std::cout << "D" << std::endl;
+  
+  cuda_check(cudaMallocHost((void **)&ENList_pinned, ENList_bytes));
+  cuda_check(cudaMallocHost((void **)&coords_pinned, coords_bytes));
+  cuda_check(cudaMallocHost((void **)&metric_pinned, metric_bytes));
+  cuda_check(cudaMallocHost((void **)&normals_pinned, normal_bytes));
+  
   memcpy(ENList_pinned, &ENList[0], ENList_bytes);
   memcpy(coords_pinned, &coords[0], coords_bytes);
   memcpy(metric_pinned, &metric[0], metric_bytes);
@@ -128,9 +124,10 @@ void Mesh::NNListToArray() {
     for(vec_it = NNList.begin(); vec_it != NNList.end(); vec_it++)
       offset += vec_it->size();
 
-    std::cout << "Need " << sizeof(size_t)*(NNodes+1) << std::endl;
-    cuda_check(cudaMallocHost((void **)NNListIndex_pinned, sizeof(size_t) * (NNodes+1)));
-    cuda_check(cudaMallocHost((void **)NNListArray_pinned, sizeof(size_t) * offset));
+    NNListArray_size = offset;
+
+    cuda_check(cudaMallocHost((void **)&NNListIndex_pinned, sizeof(size_t) * (NNodes+1)));
+    cuda_check(cudaMallocHost((void **)&NNListArray_pinned, sizeof(size_t) * offset));
 
     offset = 0;
 
@@ -155,8 +152,10 @@ void Mesh::NEListToArray() {
     for(vec_it = NEList.begin(); vec_it != NEList.end(); vec_it++)
       offset += vec_it->size();
 
-    cuda_check(cudaMallocHost((void **)NEListIndex_pinned, sizeof(size_t) * (NNodes+1)));
-    cuda_check(cudaMallocHost((void **)NEListArray_pinned, sizeof(size_t) * offset));
+    NEListArray_size = offset;
+    
+    cuda_check(cudaMallocHost((void **)&NEListIndex_pinned, sizeof(size_t) * (NNodes+1)));
+    cuda_check(cudaMallocHost((void **)&NEListArray_pinned, sizeof(size_t) * NEListArray_size));
 
     offset = 0;
 

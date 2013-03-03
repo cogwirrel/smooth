@@ -113,7 +113,9 @@ public:
   }
 
   void copyMeshDataToDevice(Mesh * mesh,
-      std::vector<std::vector<size_t> >& colour_sets,
+   //   std::vector<std::vector<size_t> >& colour_sets,
+      size_t* colorIndex,
+      size_t* colorArray,
       size_t num_colored_nodes,
       size_t dimensions)
   {
@@ -123,22 +125,25 @@ public:
     NNodes = mesh->NNodes;
     NElements = mesh->NElements;
 
+    colourIndex = colorIndex;
+
     // convert pragmatic data-structures to C-style arrays
-    NNListToArray(mesh->NNList);
-    colourSetsToArray(colour_sets); //TODO ???
-    NEListToArray(mesh->NEList);
+    //NNListToArray(mesh->NNList);
+    //colourSetsToArray(colour_sets); //TODO ???
+    //NEListToArray(mesh->NEList);
 
     // and copy everything to the device
-    copyArrayToDevice<float>(&mesh->coords[0], CUDA_coords, NNodes * ndims);
-    copyArrayToDevice<float>(&mesh->metric[0], CUDA_metric, NNodes * nloc); //TODO is thhis right?
-    copyArrayToDevice<float>(&mesh->normals[0], CUDA_normals, NNodes * ndims);
-    copyArrayToDevice<size_t>(&mesh->ENList[0], CUDA_ENList, NElements * nloc);
-    copyArrayToDevice<size_t>(NNListArray, CUDA_NNListArray, NNListArray_size);
-    copyArrayToDevice<size_t>(NNListIndex, CUDA_NNListIndex, NNodes+1);
-    copyArrayToDevice<size_t>(colourArray, CUDA_colourArray, NNodes);
-    copyArrayToDevice<size_t>(NEListArray, CUDA_NEListArray, NEListArray_size);
-    copyArrayToDevice<size_t>(NEListIndex, CUDA_NEListIndex, NNodes+1);
-
+    copyArrayToDevice<float>(mesh->coords_pinned, CUDA_coords, NNodes * ndims);
+    copyArrayToDevice<float>(mesh->metric_pinned, CUDA_metric, NNodes * nloc); //TODO is thhis right?
+    copyArrayToDevice<float>(mesh->normals_pinned, CUDA_normals, NNodes * ndims);
+    copyArrayToDevice<size_t>(mesh->ENList_pinned, CUDA_ENList, NElements * nloc);
+    copyArrayToDevice<size_t>(mesh->NNListArray_pinned, CUDA_NNListArray,
+                              mesh->NNListArray_size);
+    copyArrayToDevice<size_t>(mesh->NNListIndex_pinned, CUDA_NNListIndex, NNodes+1);
+    copyArrayToDevice<size_t>(colorArray, CUDA_colourArray, num_colored_nodes);
+    copyArrayToDevice<size_t>(mesh->NEListArray_pinned, CUDA_NEListArray, 
+                              mesh->NEListArray_size);
+    copyArrayToDevice<size_t>(mesh->NEListIndex_pinned, CUDA_NEListIndex, NNodes+1);
     //set the constant symbols of the smoothing-kernel, i.e. the addresses of all arrays copied above
     CUdeviceptr address; // TODO ????
     size_t symbol_size;
@@ -186,27 +191,17 @@ public:
     cuMemFree(CUDA_coords);
     cuMemFree(CUDA_metric);
     cuMemFree(CUDA_normals);
-    //cuMemFree(CUDA_quality);
     cuMemFree(CUDA_ENList);
-    // cuMemFree(CUDA_coplanar_ids);
     cuMemFree(CUDA_NNListArray);
     cuMemFree(CUDA_NNListIndex);
     cuMemFree(CUDA_colourArray);
     cuMemFree(CUDA_NEListArray);
     cuMemFree(CUDA_NEListIndex);
-    // cuMemFree(CUDA_smoothStatus);
-
-    delete[] NNListArray;
-    delete[] NNListIndex;
-    delete[] colourArray;
-    delete[] colourIndex;
-    delete[] NEListArray;
-    delete[] NEListIndex;
 
     cuCtxDestroy(cuContext);
   }
 
-  void launchSmoothingKernel(int colour)
+  void launchSmoothingKernel(size_t colour)
   {
     CUdeviceptr CUDA_ColourSetAddr = CUDA_colourArray + colourIndex[colour] * sizeof(size_t);
     size_t NNodesInSet = colourIndex[colour+1] - colourIndex[colour];
@@ -228,91 +223,6 @@ public:
   }
 
 private:
-  void NNListToArray(const std::vector< std::vector<size_t> > & NNList)
-  {
-    std::vector< std::vector<size_t> >::const_iterator vec_it;
-    std::vector<size_t>::const_iterator vector_it;
-    size_t offset = 0;
-    size_t index = 0;
-
-    for(vec_it = NNList.begin(); vec_it != NNList.end(); vec_it++)
-      offset += vec_it->size();
-
-    NNListArray_size = offset;
-
-    NNListIndex = new size_t[NNodes+1];
-    NNListArray = new size_t[NNListArray_size];
-
-    offset = 0;
-
-    for(vec_it = NNList.begin(); vec_it != NNList.end(); vec_it++)
-    {
-      NNListIndex[index++] = offset;
-
-      for(vector_it = vec_it->begin(); vector_it != vec_it->end(); vector_it++)
-        NNListArray[offset++] = *vector_it;
-    }
-
-    assert(index == NNList.size());
-    NNListIndex[index] = offset;
-  }
-
-  void colourSetsToArray(const std::vector<std::vector<size_t> > & colour_sets)
-  {
-    std::vector<std::vector<size_t> >::const_iterator vec_it;
-    std::vector<size_t>::const_iterator vector_it;
-
-    NColours = colour_sets.size();
-
-    colourIndex = new size_t[NColours+1];
-    colourArray = new size_t[NColoredNodes];
-
-    size_t offset = 0;
-
-    size_t colorSetIndex = 0;
-    for(vec_it = colour_sets.begin(); vec_it != colour_sets.end(); vec_it++, colorSetIndex++)
-    {
-      colourIndex[colorSetIndex] = offset;
-
-      for(vector_it = vec_it->begin();
-          vector_it != vec_it->end();
-          vector_it++, offset++) {
-        colourArray[offset] = *vector_it;
-      }
-    }
-
-    colourIndex[colour_sets.size()] = offset;
-  }
-
-  void NEListToArray(const std::vector< std::set<size_t> > & NEList)
-  {
-    std::vector< std::set<size_t> >::const_iterator vec_it;
-    std::set<size_t>::const_iterator set_it;
-    size_t offset = 0;
-    size_t index = 0;
-
-    for(vec_it = NEList.begin(); vec_it != NEList.end(); vec_it++)
-      offset += vec_it->size();
-
-    NEListArray_size = offset;
-
-    NEListIndex = new size_t[NNodes+1];
-    NEListArray = new size_t[NEListArray_size];
-
-    offset = 0;
-
-    for(vec_it = NEList.begin(); vec_it != NEList.end(); vec_it++)
-    {
-      NEListIndex[index++] = offset;
-
-      for(set_it = vec_it->begin(); set_it != vec_it->end(); set_it++)
-        NEListArray[offset++] = *set_it;
-    }
-
-    assert(index == NEList.size());
-    NEListIndex[index] = offset;
-  }
-
   template<typename type>
   inline void copyArrayToDevice(type * array, CUdeviceptr & CUDA_array, size_t array_size)
   {
@@ -359,19 +269,12 @@ private:
   CUdeviceptr CUDA_normals;
   CUdeviceptr CUDA_ENList;
 
-  size_t * NNListArray;
-  size_t * NNListIndex;
   CUdeviceptr CUDA_NNListArray;
   CUdeviceptr CUDA_NNListIndex;
-  size_t NNListArray_size;
 
-  size_t * NEListArray;
-  size_t * NEListIndex;
   CUdeviceptr CUDA_NEListArray;
   CUdeviceptr CUDA_NEListIndex;
-  size_t NEListArray_size;
 
-  size_t * colourArray;
   size_t* colourIndex;
   CUdeviceptr CUDA_colourArray;
   size_t NColours;

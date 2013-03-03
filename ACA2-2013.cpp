@@ -25,13 +25,39 @@ double get_wtime(){
     return seconds + useconds*1e-06;
 }
 
-size_t get_colored_node_count(std::vector<std::vector<size_t> >& colorings) {
-  size_t count = 0;
-  for(size_t i = 0; i < colorings.size(); i++) {
-    count += colorings[i].size();
+void colourSetsToArray(const std::vector<std::vector<size_t> > & colour_sets,
+                       size_t** colourIndex,
+                       size_t** colourArray,
+                       size_t* num_coloured_nodes
+                      )
+  {
+    std::vector<std::vector<size_t> >::const_iterator vec_it;
+    std::vector<size_t>::const_iterator vector_it;
+
+    *colourIndex = new size_t[colour_sets.size()+1];
+    
+    *num_coloured_nodes = 0;
+    for(vec_it = colour_sets.begin(); vec_it != colour_sets.end(); ++vec_it) {
+      *num_coloured_nodes += vec_it->size(); 
+    }
+    std::cout << "NUM COL NODES :" << *num_coloured_nodes << std::endl;
+    *colourArray = new size_t[*num_coloured_nodes];
+
+    size_t offset = 0;
+
+    size_t colorSetIndex = 0;
+    for(vec_it = colour_sets.begin(); vec_it != colour_sets.end(); vec_it++, colorSetIndex++)
+    {
+      (*colourIndex)[colorSetIndex] = offset;
+      for(vector_it = vec_it->begin();
+          vector_it != vec_it->end();
+          vector_it++, offset++) {
+        (*colourArray)[offset] = *vector_it;
+      }
+    }
+  
+    (*colourIndex)[colour_sets.size()] = offset;
   }
-  return count;
-}
 
 int main(int argc, char **argv){
   if(argc!=2){
@@ -39,11 +65,16 @@ int main(int argc, char **argv){
   }
 
   Mesh *mesh = new Mesh(argv[1]);
+  std::vector<std::vector<size_t> > colorings = Color::color(mesh, false);
+  
+  /* Pin mesh nd color data */
   mesh->pin_data();
 
-  std::vector<std::vector<size_t> > colorings = Color::color(mesh, false);
-  size_t num_colored_nodes = get_colored_node_count(colorings);
-
+  size_t* colourIndex;
+  size_t* colourArray;
+  size_t num_coloured_nodes;
+  colourSetsToArray(colorings, &colourIndex, &colourArray, &num_coloured_nodes);
+  
   Quality q = mesh->get_mesh_quality();
 
   std::cout << "Initial quality:\n"
@@ -51,7 +82,7 @@ int main(int argc, char **argv){
             << "Quality min:   " << q.min << std::endl;
 
   double time = get_wtime();
-  Smooth::smooth(mesh, 200, num_colored_nodes, colorings);
+  Smooth::smooth(mesh, 200, colorings.size(), num_coloured_nodes, colourIndex, colourArray);
   double time_smooth = get_wtime() - time;
 
   q = mesh->get_mesh_quality();
@@ -68,6 +99,7 @@ int main(int argc, char **argv){
   std::cout<<"BENCHMARK: " << time_smooth << "s" << std::endl;
 
   delete mesh;
-
+  delete[] colourIndex;
+  delete[] colourArray;
   return EXIT_SUCCESS;
 }
