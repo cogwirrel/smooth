@@ -1,5 +1,4 @@
 //============================================================================
-// Name        : ACA2-2013.cpp
 // Author      : George Rokos
 // Description : 2nd Assessed Coursework for ACA 2013
 //============================================================================
@@ -40,7 +39,6 @@ void colourSetsToArray(const std::vector<std::vector<size_t> > & colour_sets,
     for(vec_it = colour_sets.begin(); vec_it != colour_sets.end(); ++vec_it) {
       *num_coloured_nodes += vec_it->size(); 
     }
-    std::cout << "NUM COL NODES :" << *num_coloured_nodes << std::endl;
     *colourArray = new size_t[*num_coloured_nodes];
 
     size_t offset = 0;
