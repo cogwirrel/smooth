@@ -92,20 +92,25 @@ void Mesh::pin_data() {
   NNListToArray();
   NEListToArray();
 
-  size_t ENList_bytes = sizeof(size_t) * ENList.size();
-  size_t coords_bytes = sizeof(float) * coords.size();
-  size_t metric_bytes = sizeof(float) * metric.size();
-  size_t normal_bytes = sizeof(float) * normals.size();
-  
-  cuda_check(cudaMallocHost((void **)&ENList_pinned, ENList_bytes));
-  cuda_check(cudaMallocHost((void **)&coords_pinned, coords_bytes));
-  cuda_check(cudaMallocHost((void **)&metric_pinned, metric_bytes));
-  cuda_check(cudaMallocHost((void **)&normals_pinned, normal_bytes));
-  
+  ENList_bytes = sizeof(size_t) * ENList.size();
+  coords_bytes = sizeof(float) * coords.size();
+  metric_bytes = sizeof(float) * metric.size();
+  normals_bytes = sizeof(float) * normals.size();
+
+  // Allocate chunk of memory for these 4 arrays.
+  cuda_check(cudaMallocHost(&pinned_data,
+    ENList_bytes + coords_bytes + metric_bytes + normals_bytes));
+
+  // Point our pointers to correct position in contiguous memory
+  ENList_pinned = (size_t*)pinned_data;
+  coords_pinned = (float*)(ENList_pinned + ENList_bytes);
+  metric_pinned = (float*)(coords_pinned + coords_bytes);
+  normals_pinned = (float*)(metric_pinned + metric_bytes);
+
   memcpy(ENList_pinned, &ENList[0], ENList_bytes);
   memcpy(coords_pinned, &coords[0], coords_bytes);
   memcpy(metric_pinned, &metric[0], metric_bytes);
-  memcpy(normals_pinned, &normals[0], normal_bytes);
+  memcpy(normals_pinned, &normals[0], normals_bytes);
 }
 
 void Mesh::cuda_check(cudaError_t status) {

@@ -30,20 +30,25 @@ public:
   size_t NNodes;    // Number of mesh vertices.
   size_t NElements; // Number of mesh elements.
 
+  void* pinned_data; // ENList, coords, metric and normals
+
   // Element eid is comprised of the vertices
   // ENList[3*eid], ENList[3*eid+1] and ENList[3*eid+2].
   std::vector<size_t> ENList;
   size_t* ENList_pinned;
+  size_t ENList_bytes;
 
   // Vertex vid has coordinates x=coords[2*vid] and y=coords[2*vid+1].
   std::vector<float> coords;
   float* coords_pinned;
+  size_t coords_bytes;
   
   // The metric tensor at vertex vid is M_00 = metric[3*vid],
   //                                    M_01 = M_10 = metric[3*vid+1] and
   //                                    M_11 = metric[3*vid+2].
   std::vector<float> metric;
   float* metric_pinned;
+  size_t metric_bytes;
 
   /* If vid is on the surface, the normal vector
    * (normals[2*vid],normals[2*vid+1] =
@@ -55,6 +60,7 @@ public:
    */
   std::vector<float> normals;
   float* normals_pinned;
+  size_t normals_bytes;
 
   // For every vertex i, NNList[i] contains the IDs of all adjacent vertices.
   std::vector< std::vector<size_t> > NNList;
