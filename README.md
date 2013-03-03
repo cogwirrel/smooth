@@ -3,8 +3,29 @@ smooth
 
 Architecture Assessed Coursework 2
 
-Database
-========
+Remote Database
+===============
+
+For running experiments on shared database.
+
+* Create experiment:
+ <code>
+   ./remote-create-experiment.py C78DAB description about this experiment does
+ </code>
+ This will also print the experiment ID to output
+
+* Run command and automatically log output to DB:
+ <code>
+   ./run-db 44 ./ACA2-2013 small.vtu
+ </code>
+ Note 44 here is the experiment id returned from remote-create-experiment.py
+
+
+Local Database
+==============
+
+For running private, local experiments:
+
 * Create database:
 
   <pre><code>
