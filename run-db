@@ -1,0 +1,61 @@
+#!/bin/bash -e
+
+if [[ $# -le 1 ]] ; then
+ {
+  echo -e "\nUSAGE: `basename "$0"` EXPERIMENT-ID COMMAND...\n"
+  echo "For convenience, run the following beforehand in order to"\
+       "load your SSH keys:"
+  echo -e "\n  exec ssh-agent <YOURSHELLNAME>\
+           \n  ssh-add\n"
+  echo "Where <YOURSHELLNAME> is 'bash', 'zsh', etc."
+  exit 2
+ } >&2
+fi
+
+
+# Experiment ID
+EXPID="$1"
+
+# Source DB variables
+source db.config
+
+# Check variables are set
+echo ${OUTPUTDIR?} ${DBSERVER?} ${DBPATH?} ${LOGFILE?} > /dev/null
+
+# Create directory if non-existant
+mkdir -p "$OUTPUTDIR"
+
+
+# Get SSH keys
+NOPASS='--no-password'
+ssh-add -l > /dev/null
+case "$?" in
+  # Successful
+  0) echo "Using detected SSH authentication agent" >&2 ;;
+  # No keys added, prompt to add. If that fails, enable password prompt.
+  1) ssh-add || { NOPASS=" " ; echo "Failed to add keys." >&2 ; } ;;
+  # No ssh authentication agent. Re-run script under agent (recursive call)
+  2) echo "Starting SSH agent" >&2 ; exec ssh-agent ./"$0" "$@" ;;
+esac
+
+
+# Prepare STDOUT and STDERR files
+STDOUT="$OUTPUTDIR"/"${EXPID}-stdout-$$"
+STDERR="$OUTPUTDIR"/"${EXPID}-stderr-$$"
+
+# Log files which have not been commited to database
+trap "echo `date +%x-%X`: \
+            $STDOUT , $STDERR not commited to database > $LOGFILE" EXIT
+
+# Run command and write output to file
+shift  # discard experiment ID
+bash -c "$@" > >(tee "$STDOUT") 2> >(tee "$STDERR" >&2)
+
+# (Optional) copy output files
+scp "$STDOUT" "$STDERR" "${DBSERVER}:${DBPATH}"
+
+
+./db/remote-exec.py "$NOPASS" --path "$DBPATH" "$DBSERVER" -- \
+                    "./add-data.py $EXPID \
+                    '`basename $STDOUT`' '`basename $STDERR`'"
+
