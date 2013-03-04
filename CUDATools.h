@@ -136,7 +136,11 @@ public:
     copyPinnedDataToDevice(mesh->pinned_data, mesh->ENList_bytes,
                                               mesh->coords_bytes,
                                               mesh->metric_bytes,
-                                              mesh->normals_bytes);
+                                              mesh->normals_bytes,
+                                              mesh->NNListIndex_bytes,
+                                              mesh->NNListArray_bytes,
+                                              mesh->NEListIndex_bytes,
+                                              mesh->NEListArray_bytes);
     // copyArrayToDevice<float>(mesh->coords_pinned, CUDA_coords, NNodes * ndims);
     // copyArrayToDevice<float>(mesh->metric_pinned, CUDA_metric, NNodes * nloc); //TODO is thhis right?
     // copyArrayToDevice<float>(mesh->normals_pinned, CUDA_normals, NNodes * ndims);
@@ -199,11 +203,11 @@ public:
     // cuMemFree(CUDA_normals);
     // cuMemFree(CUDA_ENList);
     cuMemFree(CUDA_pinned_data);
-    cuMemFree(CUDA_NNListArray);
-    cuMemFree(CUDA_NNListIndex);
+    // cuMemFree(CUDA_NNListArray);
+    // cuMemFree(CUDA_NNListIndex);
     cuMemFree(CUDA_colourArray);
-    cuMemFree(CUDA_NEListArray);
-    cuMemFree(CUDA_NEListIndex);
+    // cuMemFree(CUDA_NEListArray);
+    // cuMemFree(CUDA_NEListIndex);
 
     cuCtxDestroy(cuContext);
   }
@@ -212,7 +216,7 @@ public:
   {
     CUdeviceptr CUDA_ColourSetAddr = CUDA_colourArray + colourIndex[colour] * sizeof(size_t);
     size_t NNodesInSet = colourIndex[colour+1] - colourIndex[colour];
-    threadsPerBlock = 32;
+    threadsPerBlock = 128;
     blocksPerGrid = (NNodesInSet + threadsPerBlock - 1) / threadsPerBlock;
 
     void * args[] = {&CUDA_ColourSetAddr, &NNodesInSet};
@@ -231,9 +235,18 @@ public:
 
 private:
   inline void copyPinnedDataToDevice(
-    void* pinned_data, size_t ENList_bytes, size_t coords_bytes, size_t metric_bytes, size_t normals_bytes)
+    void* pinned_data,
+    size_t ENList_bytes,
+    size_t coords_bytes,
+    size_t metric_bytes,
+    size_t normals_bytes,
+    size_t NNListIndex_bytes,
+    size_t NNListArray_bytes,
+    size_t NEListIndex_bytes,
+    size_t NEListArray_bytes)
   {
-    size_t total_size = ENList_bytes + coords_bytes + metric_bytes + normals_bytes;
+    size_t total_size = ENList_bytes + coords_bytes + metric_bytes + normals_bytes +
+                        NNListIndex_bytes + NNListArray_bytes + NEListIndex_bytes + NEListArray_bytes;
 
     if(cuMemAlloc(&CUDA_pinned_data, total_size) != CUDA_SUCCESS)
     {
@@ -247,11 +260,21 @@ private:
       exit(1);
     }
     
+    std::cout << "start: " << CUDA_pinned_data << std::endl;
+
     // Point the device pointers to the right place
     CUDA_ENList = CUDA_pinned_data;
     CUDA_coords = CUDA_ENList + ENList_bytes;
+    std::cout << "coords: " << CUDA_coords << std::endl;
     CUDA_metric = CUDA_coords + coords_bytes;
+    std::cout << "metric: " << CUDA_metric << std::endl;
     CUDA_normals = CUDA_metric + metric_bytes;
+    CUDA_NNListIndex = CUDA_normals + normals_bytes;
+    CUDA_NNListArray = CUDA_NNListIndex + NNListIndex_bytes;
+    CUDA_NEListIndex = CUDA_NNListArray + NNListArray_bytes;
+    CUDA_NEListArray = CUDA_NEListIndex + NEListIndex_bytes;
+
+    std::cout << "end: " << CUDA_NEListArray + NEListArray_bytes << std::endl;
   }
 
   template<typename type>

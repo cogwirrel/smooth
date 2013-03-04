@@ -67,12 +67,16 @@ public:
   size_t* NNListArray_pinned;
   size_t* NNListIndex_pinned;
   size_t NNListArray_size;
+  size_t NNListArray_bytes;
+  size_t NNListIndex_bytes;
 
   // For every vertex i, NEList[i] contains the IDs of all adjacent elements.
   std::vector< std::set<size_t> > NEList;
   size_t* NEListArray_pinned;
   size_t* NEListIndex_pinned;
   size_t NEListArray_size;
+  size_t NEListArray_bytes;
+  size_t NEListIndex_bytes;
 
   bool isCornerNode(size_t vid) const;
 
@@ -83,8 +87,10 @@ public:
   int orientation;
 
 private:
-  void NNListToArray();
-  void NEListToArray();
+  void* NNListToArray(void* ptr);
+  void* NEListToArray(void* ptr);
+  void setNNListSize();
+  void setNEListSize();
   void cuda_check(cudaError_t success);
   void create_adjacency();
   void find_surface();

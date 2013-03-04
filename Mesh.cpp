@@ -78,39 +78,70 @@ Mesh::Mesh(const char *filename){
 }
 
 Mesh::~Mesh() {
-  cudaFreeHost(coords_pinned);
-  cudaFreeHost(ENList_pinned);
-  cudaFreeHost(metric_pinned);
-  cudaFreeHost(normals_pinned);
-  cudaFreeHost(NNListArray_pinned);
-  cudaFreeHost(NNListIndex_pinned);
-  cudaFreeHost(NEListArray_pinned);
-  cudaFreeHost(NEListIndex_pinned);
+  // cudaFreeHost(coords_pinned);
+  // cudaFreeHost(ENList_pinned);
+  // cudaFreeHost(metric_pinned);
+  // cudaFreeHost(normals_pinned);
+  // cudaFreeHost(NNListArray_pinned);
+  // cudaFreeHost(NNListIndex_pinned);
+  // cudaFreeHost(NEListArray_pinned);
+  // cudaFreeHost(NEListIndex_pinned);
+  free(pinned_data);
+  // free(NNListArray_pinned);
+  // free(NNListIndex_pinned);
+  // free(NEListArray_pinned);
+  // free(NEListIndex_pinned);
 }
 
 void Mesh::pin_data() {
-  NNListToArray();
-  NEListToArray();
+  setNNListSize();
+  setNEListSize();
 
   ENList_bytes = sizeof(size_t) * ENList.size();
   coords_bytes = sizeof(float) * coords.size();
   metric_bytes = sizeof(float) * metric.size();
   normals_bytes = sizeof(float) * normals.size();
+  NNListIndex_bytes = sizeof(size_t) * (NNodes + 1);
+  NNListArray_bytes = sizeof(size_t) * NNListArray_size;
+  NEListIndex_bytes = sizeof(size_t) * (NNodes + 1);
+  NEListArray_bytes = sizeof(size_t) * NEListArray_size;
+
+  size_t total_size = ENList_bytes + coords_bytes + metric_bytes + normals_bytes +
+                       NNListIndex_bytes + NEListIndex_bytes + NNListArray_bytes + NEListArray_bytes;
 
   // Allocate chunk of memory for these 4 arrays.
-  cuda_check(cudaMallocHost(&pinned_data,
-    ENList_bytes + coords_bytes + metric_bytes + normals_bytes));
+  pinned_data = malloc(total_size);
+  if(!pinned_data) {
+    std::cout << "Could not allocate memory for pinned data!" << std::endl;
+    exit(1);
+  }
+
+  //cuda_check(cudaMallocHost(&pinned_data,
+  //  ENList_bytes + coords_bytes + metric_bytes + normals_bytes));
+
+  std::cout << "total size: " << total_size << std::endl;
+
+  std::cout << "begin pinned_data " << pinned_data << std::endl;
 
   // Point our pointers to correct position in contiguous memory
   ENList_pinned = (size_t*)pinned_data;
   coords_pinned = (float*)(ENList_pinned + ENList.size());
   metric_pinned = (float*)(coords_pinned + coords.size());
   normals_pinned = (float*)(metric_pinned + metric.size());
+  void* start_NEList = NNListToArray((void*)(normals_pinned + normals.size()));
+  void* end_ptr = NEListToArray(start_NEList);
+
+  std::cout << "end pinned_data: " << end_ptr << std::endl;
+
+  //std::cout << "NEListArray_pinned: " << NEListArray_pinned << std::endl;
 
   memcpy(ENList_pinned, &ENList[0], ENList_bytes);
   memcpy(coords_pinned, &coords[0], coords_bytes);
   memcpy(metric_pinned, &metric[0], metric_bytes);
   memcpy(normals_pinned, &normals[0], normals_bytes);
+  // No need to memcpy NE & NN Lists as they are created in contiguous memory
+  // in NEListToArray and NNListToArray
+
 }
 
 void Mesh::cuda_check(cudaError_t status) {
@@ -120,21 +151,32 @@ void Mesh::cuda_check(cudaError_t status) {
   }
 }
 
-void Mesh::NNListToArray() {
+
+void Mesh::setNNListSize() {
     std::vector< std::vector<size_t> >::const_iterator vec_it;
-    std::vector<size_t>::const_iterator vector_it;
     size_t offset = 0;
-    size_t index = 0;
 
     for(vec_it = NNList.begin(); vec_it != NNList.end(); vec_it++)
       offset += vec_it->size();
 
     NNListArray_size = offset;
+}
 
-    cuda_check(cudaMallocHost((void **)&NNListIndex_pinned, sizeof(size_t) * (NNodes+1)));
-    cuda_check(cudaMallocHost((void **)&NNListArray_pinned, sizeof(size_t) * offset));
+// Takes a pointer to the beginning of the memory block 
+void* Mesh::NNListToArray(void* ptr) {
+    std::vector< std::vector<size_t> >::const_iterator vec_it;
+    std::vector<size_t>::const_iterator vector_it;
+    size_t index = 0;
+    
+    NNListIndex_pinned = (size_t*)ptr;
+    NNListArray_pinned = ((size_t*)ptr) + (NNodes+1);
+    // NNListIndex_pinned = (size_t*)malloc(sizeof(size_t) * (NNodes+1));
+    // NNListArray_pinned = (size_t*)malloc(sizeof(size_t) * offset);
 
-    offset = 0;
+    // cuda_check(cudaMallocHost((void **)&NNListIndex_pinned, sizeof(size_t) * (NNodes+1)));
+    // cuda_check(cudaMallocHost((void **)&NNListArray_pinned, sizeof(size_t) * offset));
+
+    size_t offset = 0;
 
     for(vec_it = NNList.begin(); vec_it != NNList.end(); vec_it++)
     {
@@ -146,23 +188,31 @@ void Mesh::NNListToArray() {
 
     assert(index == NNList.size());
     NNListIndex_pinned[index] = offset;
+    return (void*)(NNListArray_pinned + NNListArray_size);
 }
 
-void Mesh::NEListToArray() {
+void Mesh::setNEListSize() {
     std::vector< std::set<size_t> >::const_iterator vec_it;
-    std::set<size_t>::const_iterator set_it;
     size_t offset = 0;
-    size_t index = 0;
 
     for(vec_it = NEList.begin(); vec_it != NEList.end(); vec_it++)
       offset += vec_it->size();
 
     NEListArray_size = offset;
-    
-    cuda_check(cudaMallocHost((void **)&NEListIndex_pinned, sizeof(size_t) * (NNodes+1)));
-    cuda_check(cudaMallocHost((void **)&NEListArray_pinned, sizeof(size_t) * NEListArray_size));
+}
 
-    offset = 0;
+void* Mesh::NEListToArray(void* ptr) {
+    std::vector< std::set<size_t> >::const_iterator vec_it;
+    std::set<size_t>::const_iterator set_it;
+    size_t index = 0;
+    
+    NEListIndex_pinned = (size_t*)ptr;//(size_t*)malloc(sizeof(size_t) * (NNodes+1));
+    NEListArray_pinned = ((size_t*)ptr) + (NNodes+1);//malloc(sizeof(size_t) * NEListArray_size);
+
+    // cuda_check(cudaMallocHost((void **)&NEListIndex_pinned, sizeof(size_t) * (NNodes+1)));
+    // cuda_check(cudaMallocHost((void **)&NEListArray_pinned, sizeof(size_t) * NEListArray_size));
+
+    size_t offset = 0;
 
     for(vec_it = NEList.begin(); vec_it != NEList.end(); vec_it++)
     {
@@ -174,6 +224,7 @@ void Mesh::NEListToArray() {
 
     assert(index == NEList.size());
     NEListIndex_pinned[index] = offset;
+    return (void*)(NEListArray_pinned + NEListArray_size);
 }
 
 void Mesh::create_adjacency(){
