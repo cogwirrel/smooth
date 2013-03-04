@@ -97,10 +97,10 @@ void Mesh::pin_data() {
   size_t metric_bytes = sizeof(float) * metric.size();
   size_t normal_bytes = sizeof(float) * normals.size();
   
-  cuda_check(cudaMallocHost((void **)&ENList_pinned, ENList_bytes));
-  cuda_check(cudaMallocHost((void **)&coords_pinned, coords_bytes));
-  cuda_check(cudaMallocHost((void **)&metric_pinned, metric_bytes));
-  cuda_check(cudaMallocHost((void **)&normals_pinned, normal_bytes));
+  cuda_check(cudaHostAlloc((void **)&ENList_pinned, ENList_bytes, cudaHostAllocPortable));
+  cuda_check(cudaHostAlloc((void **)&coords_pinned, coords_bytes, cudaHostAllocPortable));
+  cuda_check(cudaHostAlloc((void **)&metric_pinned, metric_bytes, cudaHostAllocPortable));
+  cuda_check(cudaHostAlloc((void **)&normals_pinned, normal_bytes, cudaHostAllocPortable));
   
   memcpy(ENList_pinned, &ENList[0], ENList_bytes);
   memcpy(coords_pinned, &coords[0], coords_bytes);
@@ -126,8 +126,8 @@ void Mesh::NNListToArray() {
 
     NNListArray_size = offset;
 
-    cuda_check(cudaMallocHost((void **)&NNListIndex_pinned, sizeof(size_t) * (NNodes+1)));
-    cuda_check(cudaMallocHost((void **)&NNListArray_pinned, sizeof(size_t) * offset));
+    cuda_check(cudaHostAlloc((void **)&NNListIndex_pinned, sizeof(size_t) * (NNodes+1), cudaHostAllocPortable));
+    cuda_check(cudaHostAlloc((void **)&NNListArray_pinned, sizeof(size_t) * offset, cudaHostAllocPortable));
 
     offset = 0;
 
@@ -154,8 +154,8 @@ void Mesh::NEListToArray() {
 
     NEListArray_size = offset;
     
-    cuda_check(cudaMallocHost((void **)&NEListIndex_pinned, sizeof(size_t) * (NNodes+1)));
-    cuda_check(cudaMallocHost((void **)&NEListArray_pinned, sizeof(size_t) * NEListArray_size));
+    cuda_check(cudaHostAlloc((void **)&NEListIndex_pinned, sizeof(size_t) * (NNodes+1), cudaHostAllocPortable));
+    cuda_check(cudaHostAlloc((void **)&NEListArray_pinned, sizeof(size_t) * NEListArray_size, cudaHostAllocPortable));
 
     offset = 0;
 

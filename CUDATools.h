@@ -49,6 +49,7 @@
 #include <stdint.h>
 
 #include <cuda.h>
+#include <cuda_runtime.h>
 
 #include "Mesh.hpp"
 
@@ -197,6 +198,8 @@ public:
     cuMemFree(CUDA_colourArray);
     cuMemFree(CUDA_NEListArray);
     cuMemFree(CUDA_NEListIndex);
+
+    cudaDeviceReset();
 
     cuCtxDestroy(cuContext);
   }
