@@ -139,6 +139,15 @@ void Mesh::pin_data() {
   memcpy(coords_pinned, &coords[0], coords_bytes);
   memcpy(metric_pinned, &metric[0], metric_bytes);
   memcpy(normals_pinned, &normals[0], normals_bytes);
+
+  __asm__ __volatile__ ("" ::: "memory");
+
+  std::cout << "TESTING END" << std::endl;
+  for (size_t* p = NNListArray_pinned; p < ((void*)NNListArray_pinned)+NNListArray_bytes; ++p)
+  {
+    assert (*p == 0xDEAD);
+  }
+
   // No need to memcpy NE & NN Lists as they are created in contiguous memory
   // in NEListToArray and NNListToArray
 
@@ -177,17 +186,24 @@ void* Mesh::NNListToArray(void* ptr) {
     // cuda_check(cudaMallocHost((void **)&NNListArray_pinned, sizeof(size_t) * offset));
 
     size_t offset = 0;
+    unsigned long count = 0;
 
     for(vec_it = NNList.begin(); vec_it != NNList.end(); vec_it++)
     {
       NNListIndex_pinned[index++] = offset;
 
-      for(vector_it = vec_it->begin(); vector_it != vec_it->end(); vector_it++)
-        NNListArray_pinned[offset++] = *vector_it;
+      for(vector_it = vec_it->begin(); vector_it != vec_it->end(); vector_it++) {
+        // assert(count++ <= NNListArray_bytes / sizeof(size_t));
+        NNListArray_pinned[offset++] = (size_t) 0xDEAD;
+      }
     }
 
     assert(index == NNList.size());
     NNListIndex_pinned[index] = offset;
+    __asm__ __volatile__ ("" ::: "memory");
+    std::cout << "TESTING initial" << std::endl;
+    for (size_t* p = NNListArray_pinned; p < ((void*)NNListArray_pinned)+NNListArray_bytes; ++p)
+      assert (*p == 0xDEAD);
     return (void*)(NNListArray_pinned + NNListArray_size);
 }
 
