@@ -31,6 +31,7 @@ public:
   size_t NElements; // Number of mesh elements.
 
   void* pinned_data; // ENList, coords, metric and normals
+  size_t total_size; // Size of pinned data
 
   // Element eid is comprised of the vertices
   // ENList[3*eid], ENList[3*eid+1] and ENList[3*eid+2].

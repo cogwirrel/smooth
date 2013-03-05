@@ -96,6 +96,8 @@ Mesh::~Mesh() {
 void Mesh::pin_data() {
   setNNListSize();
   setNEListSize();
+  
+  total_size = 0;
 
   ENList_bytes = sizeof(size_t) * ENList.size();
   coords_bytes = sizeof(float) * coords.size();
@@ -106,7 +108,19 @@ void Mesh::pin_data() {
   NEListIndex_bytes = sizeof(size_t) * (NNodes + 1);
   NEListArray_bytes = sizeof(size_t) * NEListArray_size;
 
-  size_t total_size = ENList_bytes + coords_bytes + metric_bytes + normals_bytes +
+  // Point our first 4 array pointers to correct part of memory
+  ENList_pinned = (size_t*)0;
+  coords_pinned = (float*)(ENList_pinned + ENList.size());
+  metric_pinned = (float*)(coords_pinned + coords.size());
+  normals_pinned = (float*)(metric_pinned + metric.size());
+  
+  // Align our access
+  void* start_NNList = (void*)(normals_pinned + normals.size());
+
+  size_t word_offset = (size_t)start_NNList % sizeof(size_t);
+  total_size += word_offset;
+
+  total_size += ENList_bytes + coords_bytes + metric_bytes + normals_bytes +
                        NNListIndex_bytes + NEListIndex_bytes + NNListArray_bytes + NEListArray_bytes;
 
   // Allocate chunk of memory for these 4 arrays.
@@ -116,24 +130,17 @@ void Mesh::pin_data() {
     exit(1);
   }
 
-  //cuda_check(cudaMallocHost(&pinned_data,
-  //  ENList_bytes + coords_bytes + metric_bytes + normals_bytes));
-
-  std::cout << "total size: " << total_size << std::endl;
-
-  std::cout << "begin pinned_data " << pinned_data << std::endl;
-
-  // Point our pointers to correct position in contiguous memory
+  // Point our pointers to correct part of memory
   ENList_pinned = (size_t*)pinned_data;
   coords_pinned = (float*)(ENList_pinned + ENList.size());
   metric_pinned = (float*)(coords_pinned + coords.size());
   normals_pinned = (float*)(metric_pinned + metric.size());
-  void* start_NEList = NNListToArray((void*)(normals_pinned + normals.size()));
+
+  //cuda_check(cudaMallocHost(&pinned_data,
+  //  ENList_bytes + coords_bytes + metric_bytes + normals_bytes));
+
+  void* start_NEList = NNListToArray((void*)(normals_pinned + normals.size() + (word_offset / sizeof(float))));
   void* end_ptr = NEListToArray(start_NEList);
-
-  std::cout << "end pinned_data: " << end_ptr << std::endl;
-
-  //std::cout << "NEListArray_pinned: " << NEListArray_pinned << std::endl;
 
   memcpy(ENList_pinned, &ENList[0], ENList_bytes);
   memcpy(coords_pinned, &coords[0], coords_bytes);

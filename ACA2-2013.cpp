@@ -82,7 +82,7 @@ int main(int argc, char **argv){
             << "Quality min:   " << q.min << std::endl;
 
   double time = get_wtime();
-  Smooth::smooth(mesh, 1, colorings.size(), num_coloured_nodes, colourIndex, colourArray);
+  Smooth::smooth(mesh, 200, colorings.size(), num_coloured_nodes, colourIndex, colourArray);
   double time_smooth = get_wtime() - time;
 
   q = mesh->get_mesh_quality();
