@@ -172,7 +172,6 @@ void Mesh::setNNListSize() {
 // Takes a pointer to the beginning of the memory block 
 void* Mesh::NNListToArray(void* ptr) {
     std::vector< std::vector<size_t> >::const_iterator vec_it;
-    std::vector<size_t>::const_iterator vector_it;
     size_t index = 0;
     
     NNListIndex_pinned = (size_t*)ptr;
@@ -188,9 +187,7 @@ void* Mesh::NNListToArray(void* ptr) {
     for(vec_it = NNList.begin(); vec_it != NNList.end(); vec_it++)
     {
       NNListIndex_pinned[index++] = offset;
-
-      for(vector_it = vec_it->begin(); vector_it != vec_it->end(); vector_it++)
-        NNListArray_pinned[offset++] = *vector_it;
+      memcpy(NNListArray_pinned, &( (*vec_it)[0]), vec_it->size());
     }
 
     assert(index == NNList.size());
