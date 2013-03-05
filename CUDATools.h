@@ -145,7 +145,7 @@ public:
      //copyArrayToDevice<float>(mesh->coords_pinned, CUDA_coords, NNodes * ndims);
      //copyArrayToDevice<float>(mesh->metric_pinned, CUDA_metric, NNodes * nloc); //TODO is thhis right?
      //copyArrayToDevice<float>(mesh->normals_pinned, CUDA_normals, NNodes * ndims);
-    // copyArrayToDevice<size_t>(mesh->ENList_pinned, CUDA_ENList, NElements * nloc);
+     //copyArrayToDevice<size_t>(mesh->ENList_pinned, CUDA_ENList, NElements * nloc);
 
 
     //copyArrayToDevice<size_t>(mesh->NNListArray_pinned, CUDA_NNListArray,

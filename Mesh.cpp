@@ -86,7 +86,7 @@ Mesh::~Mesh() {
   // cudaFreeHost(NNListIndex_pinned);
   // cudaFreeHost(NEListArray_pinned);
   // cudaFreeHost(NEListIndex_pinned);
-  free(pinned_data);
+  cudaFreeHost(pinned_data);
   // free(NNListArray_pinned);
   // free(NNListIndex_pinned);
   // free(NEListArray_pinned);
@@ -124,7 +124,7 @@ void Mesh::pin_data() {
                        NNListIndex_bytes + NEListIndex_bytes + NNListArray_bytes + NEListArray_bytes;
 
   // Allocate chunk of memory for these 4 arrays.
-  pinned_data = malloc(total_size);
+  cuda_check(cudaMallocHost(&pinned_data, total_size));
   if(!pinned_data) {
     std::cout << "Could not allocate memory for pinned data!" << std::endl;
     exit(1);
