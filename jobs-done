@@ -1,4 +1,29 @@
 #!/bin/bash
 
-echo done!!
-echo $1
+# Split job ids by : into array
+jobids=`echo $1 | tr ":" "\n"`
+
+# Use first job id for file name
+resultfile=${HOME}"/smooth/res/benchmark"${jobids[0]}".res"
+
+# Create the result file
+touch $resultfile
+
+i=0
+total=0
+for id in $jobids
+do
+  # Extract benchmark value
+  benchmark=`cat ${HOME}"/smooth/out/"$id".OU" | grep "BENCHMARK" | grep -o "[0-9]*\.[0-9]*"`
+
+  # Put the result in the result file
+  echo $benchmark >> $resultfile
+
+  # Add the benchmark to total value for average
+  total=`echo "scale=6; $total + $benchmark" | bc`
+  ((i++))
+done
+
+# Calculate average benchmark value
+average=`echo "scale=6; $total / $i" | bc`
+echo "Average benchmark: $average"
