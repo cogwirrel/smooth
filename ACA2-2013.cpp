@@ -1,5 +1,4 @@
 //============================================================================
-// Name        : ACA2-2013.cpp
 // Author      : George Rokos
 // Description : 2nd Assessed Coursework for ACA 2013
 //============================================================================
@@ -34,14 +33,14 @@ void colourSetsToArray(const std::vector<std::vector<size_t> > & colour_sets,
     std::vector<std::vector<size_t> >::const_iterator vec_it;
     std::vector<size_t>::const_iterator vector_it;
 
-    *colourIndex = new size_t[colour_sets.size()+1];
+    cudaHostAlloc((void**)colourIndex, colour_sets.size()+1, cudaHostAllocPortable);
     
     *num_coloured_nodes = 0;
     for(vec_it = colour_sets.begin(); vec_it != colour_sets.end(); ++vec_it) {
       *num_coloured_nodes += vec_it->size(); 
     }
-    std::cout << "NUM COL NODES :" << *num_coloured_nodes << std::endl;
-    *colourArray = new size_t[*num_coloured_nodes];
+    
+    cudaHostAlloc((void **) colourArray, *num_coloured_nodes, cudaHostAllocPortable);
 
     size_t offset = 0;
 
@@ -99,7 +98,7 @@ int main(int argc, char **argv){
   std::cout<<"BENCHMARK: " << time_smooth << "s" << std::endl;
 
   delete mesh;
-  delete[] colourIndex;
-  delete[] colourArray;
+  cudaFreeHost(colourIndex);
+  cudaFreeHost(colourArray);
   return EXIT_SUCCESS;
 }

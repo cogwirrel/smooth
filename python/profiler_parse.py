@@ -7,10 +7,22 @@ from collections import defaultdict
 def print_stats(data):
   for key, value in data.items():
     if (isinstance(value[0], float)):
-      print "%s average is %f.2" %(key, (sum(value)/len(value)))
-      print "   min is %f.2" %(min(value))
-      print "   max is %f.2" %(max(value))
+      print "%s average is %.2f" %(key, (sum(value)/len(value)))
+      print "   min is %.2f" %(min(value))
+      print "   max is %.2f" %(max(value))
 
+# Prints data out as latex table
+def print_stats_latex(data):
+  print "\\begin{tabular}{ l | l | l | l}"
+  print "\hline"
+  print "Test & Average & Min & Max \\\\"
+  print "\hline\n\hline"
+  for key, value in data.items():
+    if (isinstance(value[0], float)):
+      print "%s & %.2f & %.2f & %.2f \\\\" %(key.replace('_', '\\_'), sum(value)/len(value), min(value),
+          max(value))
+  print "\hline"
+  print "\\end{tabular}"
 
 # Processes data file
 # Parses lines in file that look liket
@@ -42,6 +54,7 @@ def process_file(path):
   return data
 
 if __name__ == '__main__':
-  path = sys.argv[1]
-  data = process_file(path)
-  print_stats(data)
+  if len(sys.argv) == 3:
+    print_stats_latex(process_file(sys.argv[2]))
+  else:
+    print_stats(process_file(sys.argv[1]))
