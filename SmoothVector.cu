@@ -73,7 +73,8 @@ __device__ float element_quality(size_t eid) {
 
   // Function
   float f = min(l/3.0, 3.0/l);
-  float F = pow(f * (2.0 - f), 3.0);
+  float temp_f = f * (2.0 - f);
+  float F = temp_f * temp_f * temp_f;
 
   // This is the 2D Lipnikov functional.
   float quality = 12.0 * sqrt(3.0) * a_m * F / (l*l);
