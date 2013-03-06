@@ -1,10 +1,10 @@
 BUILD = labs
 
-vtkinclude.cx1 = -I/apps/vtk/5.10.1/include/vtk-5.10 -I./
+vtkinclude.cx1 = -I/apps/vtk/5.10.1/include/vtk-5.10 -I/apps/cuda/5.0.35/include/ -I./
 vtkinclude.labs = -I/usr/include/vtk-5.8 -I./ -I/usr/local/cuda/include/
 vtkinclude.mac = -I/usr/local/opt/vtk/include/vtk-5.10 -I/usr/local/cuda/include/ -I./
 
-vtklibs.cx1 = -L/apps/vtk/5.10.1/lib/vtk-5.10 -lvtkCommon -lvtksys 
+vtklibs.cx1 = -L/apps/vtk/5.10.1/lib/vtk-5.10 -lvtkCommon -lvtksys -L/apps/cuda/5.0.35/lib/ -L/apps/cuda/5.0.35/lib64/
 vtklibs.labs = -L/usr/lib/vtk-5.8 -L/usr/local/cuda/lib64/ -L/usr/lib/nvidia-current
 vtklibs.mac = -L/usr/local/opt/vtk/lib/vtk-5.10 -L/usr/local/cuda/lib/
 

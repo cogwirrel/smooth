@@ -7,5 +7,6 @@
 cd ${HOME}/smooth
 module load intel-suite
 module load vtk/5.10.1
-make
+module load cuda/5.0.35
+make BUILD=cx1
 ./ACA2-2013 $1
