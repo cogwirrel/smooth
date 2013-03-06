@@ -134,17 +134,28 @@ public:
     //NEListToArray(mesh->NEList);
 
     // and copy everything to the device
-    copyArrayToDevice<float>(mesh->coords_pinned, CUDA_coords, NNodes * ndims);
-    copyArrayToDevice<float>(mesh->metric_pinned, CUDA_metric, NNodes * nloc); //TODO is thhis right?
-    copyArrayToDevice<float>(mesh->normals_pinned, CUDA_normals, NNodes * ndims);
-    copyArrayToDevice<size_t>(mesh->ENList_pinned, CUDA_ENList, NElements * nloc);
-    copyArrayToDevice<size_t>(mesh->NNListArray_pinned, CUDA_NNListArray,
-                              mesh->NNListArray_size);
-    copyArrayToDevice<size_t>(mesh->NNListIndex_pinned, CUDA_NNListIndex, NNodes+1);
+    copyPinnedDataToDevice(mesh->pinned_data, mesh->total_size,
+                                              mesh->ENList_pinned,
+                                              mesh->coords_pinned,
+                                              mesh->metric_pinned,
+                                              mesh->normals_pinned,
+                                              mesh->NNListIndex_pinned,
+                                              mesh->NNListArray_pinned,
+                                              mesh->NEListIndex_pinned,
+                                              mesh->NEListArray_pinned);
+     //copyArrayToDevice<float>(mesh->coords_pinned, CUDA_coords, NNodes * ndims);
+     //copyArrayToDevice<float>(mesh->metric_pinned, CUDA_metric, NNodes * nloc); //TODO is thhis right?
+     //copyArrayToDevice<float>(mesh->normals_pinned, CUDA_normals, NNodes * ndims);
+     //copyArrayToDevice<size_t>(mesh->ENList_pinned, CUDA_ENList, NElements * nloc);
+
+
+    //copyArrayToDevice<size_t>(mesh->NNListArray_pinned, CUDA_NNListArray,
+    //                          mesh->NNListArray_size);
+    //copyArrayToDevice<size_t>(mesh->NNListIndex_pinned, CUDA_NNListIndex, NNodes+1);
     copyArrayToDevice<size_t>(colorArray, CUDA_colourArray, num_colored_nodes);
-    copyArrayToDevice<size_t>(mesh->NEListArray_pinned, CUDA_NEListArray, 
-                              mesh->NEListArray_size);
-    copyArrayToDevice<size_t>(mesh->NEListIndex_pinned, CUDA_NEListIndex, NNodes+1);
+    //copyArrayToDevice<size_t>(mesh->NEListArray_pinned, CUDA_NEListArray, 
+    //                          mesh->NEListArray_size);
+    //copyArrayToDevice<size_t>(mesh->NEListIndex_pinned, CUDA_NEListIndex, NNodes+1);
     //set the constant symbols of the smoothing-kernel, i.e. the addresses of all arrays copied above
     CUdeviceptr address; // TODO ????
     size_t symbol_size;
@@ -189,15 +200,16 @@ public:
 
   void freeResources()
   {
-    cuMemFree(CUDA_coords);
-    cuMemFree(CUDA_metric);
-    cuMemFree(CUDA_normals);
-    cuMemFree(CUDA_ENList);
-    cuMemFree(CUDA_NNListArray);
-    cuMemFree(CUDA_NNListIndex);
+    // cuMemFree(CUDA_coords);
+    // cuMemFree(CUDA_metric);
+    // cuMemFree(CUDA_normals);
+    // cuMemFree(CUDA_ENList);
+    cuMemFree(CUDA_pinned_data);
+    // cuMemFree(CUDA_NNListArray);
+    // cuMemFree(CUDA_NNListIndex);
     cuMemFree(CUDA_colourArray);
-    cuMemFree(CUDA_NEListArray);
-    cuMemFree(CUDA_NEListIndex);
+    // cuMemFree(CUDA_NEListArray);
+    // cuMemFree(CUDA_NEListIndex);
 
     cudaDeviceReset();
 
@@ -226,6 +238,41 @@ public:
   }
 
 private:
+  inline void copyPinnedDataToDevice(
+    void* pinned_data,
+    size_t total_size,
+    size_t* ENList_pinned,
+    float* coords_pinned,
+    float* metric_pinned,
+    float* normals_pinned,
+    size_t* NNListIndex_pinned,
+    size_t* NNListArray_pinned,
+    size_t* NEListIndex_pinned,
+    size_t* NEListArray_pinned)
+  {
+    if(cuMemAlloc(&CUDA_pinned_data, total_size) != CUDA_SUCCESS)
+    {
+      std::cout << "Error batch allocating CUDA memory" << std::endl;
+      exit(1);
+    }
+    
+    if(cuMemcpyHtoD(CUDA_pinned_data, pinned_data, total_size) != CUDA_SUCCESS)
+    {
+      std::cout << "Unable to copy data to device" << std::endl;
+      exit(1);
+    }
+    
+    // Point the device pointers to the right place
+    CUDA_ENList = CUDA_pinned_data;
+    CUDA_coords = CUDA_pinned_data + ((size_t)coords_pinned - (size_t)pinned_data);
+    CUDA_metric = CUDA_pinned_data + ((size_t)metric_pinned - (size_t)pinned_data);
+    CUDA_normals = CUDA_pinned_data + ((size_t)normals_pinned - (size_t)pinned_data);
+    CUDA_NNListIndex = CUDA_pinned_data + ((size_t)NNListIndex_pinned - (size_t)pinned_data);
+    CUDA_NNListArray = CUDA_pinned_data + ((size_t)NNListArray_pinned - (size_t)pinned_data);
+    CUDA_NEListIndex = CUDA_pinned_data + ((size_t)NEListIndex_pinned - (size_t)pinned_data);
+    CUDA_NEListArray = CUDA_pinned_data + ((size_t)NEListArray_pinned - (size_t)pinned_data);
+  }
+
   template<typename type>
   inline void copyArrayToDevice(type * array, CUdeviceptr & CUDA_array, size_t array_size)
   {
@@ -267,6 +314,7 @@ private:
 
   size_t NNodes, NColoredNodes, NElements, NSElements, ndims, nloc;
 
+  CUdeviceptr CUDA_pinned_data;
   CUdeviceptr CUDA_coords;
   CUdeviceptr CUDA_metric;
   CUdeviceptr CUDA_normals;

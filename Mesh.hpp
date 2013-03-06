@@ -30,20 +30,26 @@ public:
   size_t NNodes;    // Number of mesh vertices.
   size_t NElements; // Number of mesh elements.
 
+  void* pinned_data; // ENList, coords, metric and normals
+  size_t total_size; // Size of pinned data
+
   // Element eid is comprised of the vertices
   // ENList[3*eid], ENList[3*eid+1] and ENList[3*eid+2].
   std::vector<size_t> ENList;
   size_t* ENList_pinned;
+  size_t ENList_bytes;
 
   // Vertex vid has coordinates x=coords[2*vid] and y=coords[2*vid+1].
   std::vector<float> coords;
   float* coords_pinned;
+  size_t coords_bytes;
   
   // The metric tensor at vertex vid is M_00 = metric[3*vid],
   //                                    M_01 = M_10 = metric[3*vid+1] and
   //                                    M_11 = metric[3*vid+2].
   std::vector<float> metric;
   float* metric_pinned;
+  size_t metric_bytes;
 
   /* If vid is on the surface, the normal vector
    * (normals[2*vid],normals[2*vid+1] =
@@ -55,18 +61,23 @@ public:
    */
   std::vector<float> normals;
   float* normals_pinned;
+  size_t normals_bytes;
 
   // For every vertex i, NNList[i] contains the IDs of all adjacent vertices.
   std::vector< std::vector<size_t> > NNList;
   size_t* NNListArray_pinned;
   size_t* NNListIndex_pinned;
   size_t NNListArray_size;
+  size_t NNListArray_bytes;
+  size_t NNListIndex_bytes;
 
   // For every vertex i, NEList[i] contains the IDs of all adjacent elements.
   std::vector< std::set<size_t> > NEList;
   size_t* NEListArray_pinned;
   size_t* NEListIndex_pinned;
   size_t NEListArray_size;
+  size_t NEListArray_bytes;
+  size_t NEListIndex_bytes;
 
   bool isCornerNode(size_t vid) const;
 
@@ -77,8 +88,10 @@ public:
   int orientation;
 
 private:
-  void NNListToArray();
-  void NEListToArray();
+  void* NNListToArray(void* ptr);
+  void* NEListToArray(void* ptr);
+  void setNNListSize();
+  void setNEListSize();
   void cuda_check(cudaError_t success);
   void create_adjacency();
   void find_surface();
